@@ -25,7 +25,7 @@ cd "$dir"
 # find all unique files of various types and creates bn2 files
 for x in txt wav; do
   find "$test_dir" -name "*.$x" |
-  sort |
+  sort -V |
   tee "${x}list" |
   tr '\n' '\0' |
   xargs -I{} -0 bash -c 'filename="$(basename "$1" '".$x"')"; echo ""$filename":"$1""' -- {} > "bn2${x}"
