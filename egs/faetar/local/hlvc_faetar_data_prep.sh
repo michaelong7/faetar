@@ -45,51 +45,48 @@ utils="$(pwd -P)/utils"
 
 cd "$dir"
 
-find_files "$test_dir" "test"
-find_files "$train_dir" "train"
+# find_files "$test_dir" "test"
+# find_files "$train_dir" "train"
 
-# merges bn2wav_train and bn2wav_test, and wavlist_traind and wavlist_test
-cat "bn2wav_test" "bn2wav_train" | sort -t ':' -k 1,1 > "bn2wav"
-cat "wavlist_test" "wavlist_train" | sort -t ':' -k 1,1 > "wavlist"
+# # merges bn2wav_train and bn2wav_test, and wavlist_traind and wavlist_test
+# cat "bn2wav_test" "bn2wav_train" | sort -t ':' -k 1,1 > "bn2wav"
+# cat "wavlist_test" "wavlist_train" | sort -t ':' -k 1,1 > "wavlist"
 
-# make symbolic links to wav files in links/ directory
-mkdir -p links/
-rm -f links/*
-tr '\n' '\0' < wavlist |
-  xargs -0 -I{} bash -c 'v="$(basename "$1" .wav)"; ln -sf "$1" "links/${v}.wav"' -- "{}"
+# # make symbolic links to wav files in links/ directory
+# mkdir -p links/
+# rm -f links/*
+# tr '\n' '\0' < wavlist |
+#   xargs -0 -I{} bash -c 'v="$(basename "$1" .wav)"; ln -sf "$1" "links/${v}.wav"' -- "{}"
 
-# now we can use Kaldi's table format
-cat bn2wav | cut -d ':' -f 1 |
-  awk -v d="$(cd links; pwd -P)" '{print $1, "sox "d"/"$1".wav -t wav -b 16 - rate 16k remix 1 |"}' > wav_unlab.scp
+# # now we can use Kaldi's table format
+# cat bn2wav | cut -d ':' -f 1 |
+#   awk -v d="$(cd links; pwd -P)" '{print $1, "sox "d"/"$1".wav -t wav -b 16 - rate 16k remix 1 |"}' > wav_unlab.scp
 
-# get those durations (lots of warnings - don't worry about those)
-if [ ! -f "reco2dur_unlab" ]; then
-  wav-to-duration "scp,s,o:wav_unlab.scp" "ark,t:reco2dur_unlab"
-fi
+# # get those durations (lots of warnings - don't worry about those)
+# if [ ! -f "reco2dur_unlab" ]; then
+#   wav-to-duration "scp,s,o:wav_unlab.scp" "ark,t:reco2dur_unlab"
+# fi
 
-# these mappings will be used to build collapsed partitions as well as a global 
-# unlabelled partition (unlab)
-cat reco2dur_unlab | \
-  xargs -I{} bash -c 'read -ra v <<< "$1"; speaker=$(cut -d "_" -f 2 <<< "${v[0]}") ms=$(echo "${v[1]} * 100" | bc -l); printf "%s-%s-0000000-%06.0f %s 0.00 %.2f\n" "${v[0]}" "$speaker" "$ms" "${v[0]}" "${v[1]}"' -- {} \
-  > segments_unlab
-cut -d ' ' -f 1 segments_unlab > unlab.uttlist
-cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
-paste -d ' ' unlab.uttlist <(cut -d '-' -f 1-2 unlab.uttlist) > utt2spk_unlab
+# # these mappings will be used to build collapsed partitions as well as a global 
+# # unlabelled partition (unlab)
+# cat reco2dur_unlab | \
+#   xargs -I{} bash -c 'read -ra v <<< "$1"; speaker=$(cut -d "_" -f 2 <<< "${v[0]}") ms=$(echo "${v[1]} * 100" | bc -l); printf "%s-%s-0000000-%06.0f %s 0.00 %.2f\n" "${v[0]}" "$speaker" "$ms" "${v[0]}" "${v[1]}"' -- {} \
+#   > segments_unlab
+# cut -d ' ' -f 1 segments_unlab > unlab.uttlist
+# cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
+# paste -d ' ' unlab.uttlist <(cut -d '-' -f 1-2 unlab.uttlist) > utt2spk_unlab
 
-# construct kaldi files for train partition
+# # construct kaldi files for train partition
 
-join -1 2 -2 1 <(cut -d ' ' -f 1,2 < segments_unlab) <(tr ':' ' ' < bn2txt_train) |
-tr '\n' '\0' |
-xargs -I{} -0 bash -c 'read -ra v <<< "$1"; text="$(cat ${v[2]})" ; printf "%s %s\n" "${v[1]}" "$text"' -- {} > "text_train"
-cut -d ' ' -f 1 text_train > train.uttlist
+# join -1 2 -2 1 <(cut -d ' ' -f 1,2 < segments_unlab) <(tr ':' ' ' < bn2txt_train) |
+# tr '\n' '\0' |
+# xargs -I{} -0 bash -c 'read -ra v <<< "$1"; text="$(cat ${v[2]})" ; printf "%s %s\n" "${v[1]}" "$text"' -- {} > "text_train"
+# cut -d ' ' -f 1 text_train > train.uttlist
 join utt2spk_unlab train.uttlist > utt2spk_train
-
-exit 20 
-
-cut -d ' ' -f 1-4 eaf_dump_core | join core.uttlist - > segments_core
-cut -d ' ' -f 2 segments_core | sort -u > core.recolist
-join core.recolist wav_unlab.scp > wav_core.scp
-join core.recolist reco2dur_unlab > reco2dur_core
+cut -d ' ' -f 1 text_train | join train.uttlist - > segments_train
+cut -d ' ' -f 2 segments_train | sort -u > train.recolist
+join train.recolist wav_unlab.scp > wav_train.scp
+join train.recolist reco2dur_unlab > reco2dur_train
 
 exit 20
 
