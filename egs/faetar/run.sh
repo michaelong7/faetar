@@ -48,55 +48,29 @@ if [ $stage -le 0 ]; then
     exit 1
   fi
 
-  # local/hlvc_faetar_data_prep.sh "$test_dir" "$train_dir"
-  # local/hlvc_faetar_prepare_dict.sh _train
+  local/hlvc_faetar_data_prep.sh "$test_dir" "$train_dir"
+  local/hlvc_faetar_prepare_dict.sh _train
   utils/prepare_lang.sh data/local/dict_train \
                 "[x]" data/local/lang_tmp_train data/lang_train
   local/hlvc_faetar_format_data.sh _train
-
-  exit 21
-  ##############################################################3
-
-
-
 
   $only && exit 0
 fi
 
 # construct mfccs
 if [ $stage -le 1 ]; then
-  steps/make_mfcc.sh --cmd "$feat_cmd" --nj "$feat_jobs" data/unlab
-  steps/compute_cmvn_stats.sh data/unlab
-  steps/compute_vad_decision.sh data/unlab
 
-  # these are subsets of unlab; don't recompute anything
-  for x in core_collapsed doc rough; do
-    join <(cut -d ' ' -f 1 data/$x/utt2spk) data/unlab/feats.scp \
-      > data/$x/feats.scp
-    join <(cut -d ' ' -f 1 data/$x/utt2spk) data/unlab/vad.scp \
-      > data/$x/vad.scp
-    join <(cut -d ' ' -f 1 data/$x/spk2utt) data/unlab/cmvn.scp \
-      > data/$x/cmvn.scp
-    utils/validate_data_dir.sh data/$x
+  for x in train test; do
+    steps/make_mfcc.sh --cmd "$feat_cmd" --nj "$feat_jobs" data/$x
+    steps/compute_cmvn_stats.sh data/$x
+    steps/compute_vad_decision.sh data/$x
+    utils/validate_data_dir.sh --non-print data/$x
   done
-
-  # the core partition involves subsegmenting data/core_collapsed.
-  # We use subsegment_data_dir.sh to avoid re-computing features. However,
-  # the script overwrites the speaker ids, which we revert. Also, we compute
-  # cmvn info
-  join -1 2 -2 2 data/{core_collapsed,core}/segments -o '2.1,1.1,2.3,2.4' \
-    > data/core/subsegments
-  utils/data/subsegment_data_dir.sh \
-    data/core_collapsed data/core/subsegments data/core
-  rm data/core/subsegments
-  sed -i -e 's/^\(.*\)-\([1-9]\)-\(.*\)[1-9]$/\1-\2-\3\2/' data/core/utt2spk 
-  utils/utt2spk_to_spk2utt.pl < data/core/utt2spk > data/core/spk2utt
-  steps/compute_cmvn_stats.sh data/core
   
   $only && exit 0
 fi
 
-frame_shift=$(cat data/unlab/frame_shift)
+frame_shift=$(cat data/train/frame_shift)
 
 # make speaker-independent monophone model off core partition
 if [ $stage -le 2 ]; then
