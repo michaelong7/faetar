@@ -1,0 +1,45 @@
+wav	eafs	docs	Column1	Legend
+090614-001_card2_2.wav				Not transcribed at all
+Bolognone_all_27Feb2010.wav				Partial transcription / recording
+E_Infante_13Aug09_all.wav				"Good to go
+- Full transcription"
+F0M60A_FW.wav				Mislabelled
+F0M60A_IV.wav				Immediate check & blank
+F1F68A_FW.wav	F1F68A_FW.eaf			Restricted file
+F1F68A_IV_1.wav	F1F68A_IV_part1_2.eaf			Problematic
+F1F68A_IV_2.wav				Naomi's files May 2023
+F1F70A_FW.wav	F1F70A_FW.eaf	F1F70A_FW.doc		
+F1F70A_IV.wav	F1F70A_IV.eaf			
+F1F75A_F1M80A_IV_1.wav	F1F75A_F1M80A_IV_1.eaf			
+F1F75A_F1M80A_IV_2.wav				
+F1F75A_FW.wav	F1F75A_FW.eaf			
+F1F79A_F1M92A_F2F51A_F2M58A_IV.wav	F1F79A&F1M92A_&_F2F51A&F2M58A_IV.eaf			
+F1F79A_FW.wav	F1F79A_FW.eaf			
+F1M72A_EOQ.wav	F1M72A_EOQ.eaf			
+F1M72A_FW.wav	F1M72A_FW.eaf			
+F1M72A_IV.wav	F1M72A_IV.eaf			
+F1M75A&family_IV_part1.wav	F1M75A&family_IV_part1.eaf			
+F1M75A_FW_partial.wav	F1M75A_FW_partial.eaf	"F1F71A_FW_partial.doc
+F1M75A_FW_partial.txt"		
+F1M76A_FW.wav	F1M76A_FW.eaf	F1M76A_FW.doc		
+F1M76A_IV.wav	F1M76A_IV.eaf			
+F1M80A_FW.wav	F1M80A_FW.eaf	F1M80A_FW_lists.doc		
+F1M92A_FW.wav	F1M92A_FW.eaf			
+F2F29A_FW.wav	F2F29A_FW.eaf			
+F2F38A_FW.wav	F2F38A_FW.eaf			
+F2F50A_FW.wav	F2F50A_FW_1.eaf			
+F2F51A_FW.wav	F2F51A_FW.eaf	"F2F51A_FW_translated.doc
+F2F51A_FW_translated.txt
+F2F51A_FW.txt"		
+F2M32A_FW.wav	F2M32A_FW.eaf	"F1M32A_FW.doc
+F1M32A_FW_trad.txt
+F1M32A_FW_list.txt"		
+F2M32A_IV.wav	"F2M32A_IV.eaf
+F2M32A_IV_2.eaf"			
+F2M42A_FW_1.wav	F2M42A_FW_1.eaf			
+F2M42A_FW_2.wav	F2M42A_FW_2.eaf			
+F2M58A_FW.wav	F2M58A_FW.eaf	F2M58A_FW.txt		
+Faeto_061409_Gallucci_2.wav				
+Richetti_3Aug09_card2_all.wav				
+Sept12_Interview.wav				
+card2_Sachetti_all.wav				

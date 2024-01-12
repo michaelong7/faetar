@@ -1,0 +1,288 @@
+filename	diarization name	new speaker name	corpus speaker label	unknown time	notes	index
+he_w006	Speaker 1	heMT001	MALE-SPKR	191.23	(could be F1M72A / heM005)	1
+he_w006	Speaker 2	heF001	F1F68A			2
+						3
+he_w007	Speaker 1	heF001	F1F68A			4
+						5
+he_w009	Speaker 1	heF002	F1F70A			6
+						7
+he_w010	Speaker 1	heF002	F1F70A			8
+he_w010	Speaker 2	heM001	F1M70A			9
+he_w010	Speaker 3	heF002	F1F70A_EDIT_(RG)			10
+he_w010	Speaker 4	heF002	F1F70A_VOT			11
+he_w010	Speaker 5	heF002	F1F70A-Eng2			12
+						13
+he_w011	Speaker 1	heF003	F1F75A			14
+he_w011	Speaker 2	heM002	F1M80A			15
+he_w011	Speaker 3	heF004	F2F38A			16
+						17
+he_w013	Speaker 1	heF003	speaker		(original filename indicates that this is F1F75A)	18
+he_w013	Speaker 2	heFT001	speaker_2	27.02	(could be F2F38A / heF004)	19
+						20
+he_w014	Speaker 1	heF005	F2F51A			21
+he_w014	Speaker 2	heM003	F2M58A			22
+he_w014	Speaker 3	heM004	F1M92A			23
+he_w014	Speaker 4	heF006	F1F79A			24
+						25
+he_w015	Speaker 1	heM004	F1M92A			26
+he_w015	Speaker 2	heF006	F1F79A			27
+						28
+he_w016	Speaker 1	heM005	F1M72A			29
+he_w016	Speaker 2	heF001	F1F68A			30
+						31
+he_w017	Speaker 1	heM005	F1M72A			32
+he_w017	Speaker 2	heUT001	OTHER-SPKRS	18.51		33
+						34
+he_w018	Speaker 1	heM005	F1M72A			35
+						36
+he_w019	Speaker 1	heM006	F1M75A			37
+he_w019	Speaker 2	heF007	F1F71A			38
+he_w019	Speaker 3	heF008	F2F50A			39
+he_w019	Speaker 4	heM007	F2M42A			40
+						41
+he_w020	Speaker 1	heM006	father		(original filename + he_w019 filename indicates that this is F1M75A)	42
+he_w020	Speaker 2	heF008	daughter		(original filename + he_w019 filename indicates that this is F2F50A)	43
+he_w020	Speaker 3	heF007	mother		(original filename + he_w019 filename indicates that this is F1F71A)	44
+he_w020	Speaker 4	heM007	son		(original filename + he_w019 filename indicates that this is F2M42A)	45
+						46
+he_w021	Speaker 1	heM008	Speaker		(original filename indicates that this is F1M76A)	47
+						48
+he_w022	Speaker 1	heM008	F1M76A			49
+						50
+he_w023	Speaker 1	heM002	F1M80A			51
+he_w023	Speaker 2	heF003	F1F75A			52
+						53
+he_w024	Speaker 1	heM004	F1M92A			54
+he_w024	Speaker 2	heF006	F1F79A			55
+						56
+he_w025	Speaker 1	heF009	speaker		(original filename indicates that this is F2F29A)	57
+he_w025	Speaker 2	heFT002	mother	13.56		58
+he_w025	Speaker 3	heMT002	father	33.28		59
+						60
+he_w026	Speaker 1	heF004	F2F38A			61
+						62
+he_w027	Speaker 1	heF008	F2F50A			63
+						64
+he_w028	Speaker 1	heF005	Speaker		(original filename indicates that this is F2F51A)	65
+he_w028	Speaker 2	heMT003	speaker's_husband	2.73		66
+he_w028	Speaker 3	heFT003	female_in_background	4.31		67
+						68
+he_w029	Speaker 1	heM009	F2M32A			69
+						70
+he_w030	Speaker 1	heM009	F2M32A_VOT			71
+he_w030	Speaker 2	heM009	F2M32A_EDIT_(RG)			72
+he_w030	Speaker 3	heM009	F2M32A			73
+						74
+he_w031	Speaker 1	heM007	F2M42A			75
+he_w031	Speaker 2	heM006	F1M75A			76
+						77
+he_w032	Speaker 1	heM007	F2M42A			78
+he_w032	Speaker 2	heF007	F1F71A			79
+						80
+he_w033	Speaker 1	heM003	Speaker		(original filename indicates that this is F2M58A)	81
+he_w033	Speaker 2	heFT004	female_relative	1.88		82
+he_w033	Speaker 3	heMT004	male_relative	3.16		83
+						84
+hl_w011	SPEAKER_00	hlUT002		3.09	"(for hl files with one main speaker, the main speaker is assumed to be the speaker with the longest time covered)"	85
+hl_w011	SPEAKER_01	hlF010	Main_Speaker		(mapping file indicates that this is F82B)	86
+						87
+hl_w022	SPEAKER_00	hlF011	F11B_-_Faetar			88
+						89
+hl_w023	SPEAKER_00	hlF011			(original filename indicates that this is F11B)	90
+						91
+hl_w024	SPEAKER_00	hlF012	F11C_-_Faetar			92
+hl_w024	SPEAKER_02	hlUT003		0.16		93
+						94
+hl_w026	SPEAKER_01	hlUT004		1.91		95
+hl_w026	SPEAKER_02	hlF013			(original filename indicates that this is F11E)	96
+						97
+hl_w027	SPEAKER_00	hlUT005		0.19	(hlUT005 - hlUT007 are likely a mix of F12A and F12B)	98
+hl_w027	SPEAKER_01	hlUT006		0.18		99
+hl_w027	SPEAKER_02	hlF014			(docx file indicates that this is F12A)	100
+hl_w027	SPEAKER_03	hlUT007		0.26		101
+						102
+hl_w028	SPEAKER_00	hlF015			(original filename indicates that this is F13)	103
+hl_w028	SPEAKER_01	hlUT008		0.13		104
+						105
+hl_w029	SPEAKER_00	hlF016	F14A			106
+hl_w029	SPEAKER_03	hlUT009		0.14		107
+						108
+hl_w030	SPEAKER_00	hlF017			(original filename indicates that this is F14B)	109
+						110
+hl_w031	SPEAKER_00	hlF018			(original filename indicates that this is F15)	111
+hl_w031	SPEAKER_01	hlUT010		1.7		112
+						113
+hl_w034	SPEAKER_00	hlF019			(original filename indicates that this is F17)	114
+						115
+hl_w036	SPEAKER_00	hlUT011		1.43		116
+hl_w036	SPEAKER_01	hlF020	F21_-_Faetar			117
+hl_w036	SPEAKER_02	hlUT012		1.39		118
+						119
+hl_w037	SPEAKER_00	hlF021	tokenized		(original filename indicates that this is F27C2019)	120
+						121
+hl_w042	SPEAKER_00	hlF022	Main_Speaker		(original filename indicates that this is F47A2019)	122
+						123
+hl_w043	SPEAKER_00	hlF023	F5_-_Faetar		(docx indicates that this is F5)	124
+hl_w043	SPEAKER_01	hlM010			(docx indicates that this is M56)	125
+hl_w043	SPEAKER_03	hlUT013		18.54		126
+hl_w043	SPEAKER_04	hlUT014		0.12		127
+						128
+hl_w044	SPEAKER_00	hlF023			(original filename indicates that this is F5)	129
+						130
+hl_w045	SPEAKER_00	hlF024	F50D_-_Faetar			131
+						132
+hl_w046	SPEAKER_00	hlUT015		0.9	(could be F68 based on original filename)	133
+hl_w046	SPEAKER_01	hlUT016		0.11	(could be F68 based on original filename)	134
+hl_w046	SPEAKER_02	hlF025	F56B_-_Fait			135
+hl_w046	SPEAKER_03	hlUT017		0.46	(could be F68 based on original filename)	136
+						137
+hl_w050	SPEAKER_00	hlF026			(original filename indicates that this is F62B)	138
+hl_w050	SPEAKER_02	hlUT018		0.22		139
+hl_w050	SPEAKER_03	hlUT019		5.39		140
+hl_w050	SPEAKER_04	hlUT020		7.17		141
+						142
+hl_w051	SPEAKER_00	hlF026			(original filename indicates that this is F62B)	143
+hl_w051	SPEAKER_01	hlUT021		0.44		144
+hl_w051	SPEAKER_02	hlUT022		21.72		145
+hl_w051	SPEAKER_03	hlUT023		0.12		146
+hl_w051	SPEAKER_04	hlUT024		0.1		147
+						148
+hl_w052	SPEAKER_00	hlF026			(original filename indicates that this is F62B)	149
+hl_w052	SPEAKER_01	hlUT025		1.59		150
+hl_w052	SPEAKER_02	hlUT026		0.15		151
+						152
+hl_w053	SPEAKER_01	hlF027	F64_-_Faetar			153
+hl_w053	SPEAKER_02	hlUT027		5.61		154
+						155
+hl_w055	SPEAKER_00	hlF028			(original filename indicates that this is F65A)	156
+hl_w055	SPEAKER_01	hlUT028		1.29		157
+						158
+hl_w056	SPEAKER_00	hlUT029		0.71		159
+hl_w056	SPEAKER_01	hlF029			(original filename indicates that this is F65B)	160
+hl_w056	SPEAKER_02	hlUT030		7.84		161
+						162
+hl_w061	SPEAKER_00	hlF030	Main_Speaker		(original filename indicates that this is F6A2019)	163
+						164
+hl_w063	SPEAKER_00	hlUT031		3.62		165
+hl_w063	SPEAKER_01	hlF031			(original filename indicates that this is F6)	166
+						167
+hl_w066	SPEAKER_00	hlF032			(original filename indicates that this is F72A)	168
+hl_w066	SPEAKER_02	hlUT032		0.16		169
+						170
+hl_w067	SPEAKER_02	hlF032	F72_-_Faetar			171
+						172
+hl_w068	SPEAKER_00	hlF033			(original filename indicates that this is F78)	173
+hl_w068	SPEAKER_01	hlUT033		2.29		174
+hl_w068	SPEAKER_02	hlUT034		13.91		175
+hl_w068	SPEAKER_03	hlUT035		4.28		176
+						177
+hl_w075	SPEAKER_01	hlUT036	Second_speaker	47.19	(possibly F27C2019 / hlF021)	178
+hl_w075	SPEAKER_02	hlUT036	Second_speaker	4.51		179
+hl_w075	SPEAKER_03	hlUT037	Main_Speaker	78.64	(possibly F82019)	180
+						181
+hl_w078	SPEAKER_00	hlUT038		45.75	(possibly F82019 or F27C2019)	182
+						183
+hl_w086	SPEAKER_00	hlM011	M10_-_Faetar		(docx indicates that this is M10)	184
+hl_w086	SPEAKER_01	INTER		37.96	(docx indicates that this is the interviewer)	185
+hl_w086	SPEAKER_02	hlM010	M56_-_Faetar		(docx indicates that this is M56)	186
+hl_w086	SPEAKER_03	hlUT038		4.5		187
+hl_w086	SPEAKER_04	hlUT039		2.86		188
+						189
+hl_w087	SPEAKER_00	hlM011			(original filename indicates that this is M10)	190
+						191
+hl_w088	SPEAKER_01	hlM012	M11A+B_-_Faetar		(original filename indicates that this is M11B)	192
+						193
+hl_w091	SPEAKER_01	hlM013	M13A_-_Faetar			194
+						195
+hl_w095	SPEAKER_01	hlUT040		0.54		196
+hl_w095	SPEAKER_02	hlM014	M16D_-_Faetar			197
+						198
+hl_w096	SPEAKER_00	hlUT041	Main_Speaker	5.47	(possibly M16E2019)	199
+hl_w096	SPEAKER_02	hlUT042	Second_speaker	2.01		200
+hl_w096	SPEAKER_03	hlUT042	Second_speaker	1.53		201
+						202
+hl_w097	SPEAKER_00	hlM015	M17_-_Faetar			203
+hl_w097	SPEAKER_01	hlUT043		0.62		204
+						205
+hl_w100	SPEAKER_02	hlUT044		0.31	(docx indicates this is either M23C or F22)	206
+hl_w100	SPEAKER_03	hlUT045		0.12	(docx indicates this is either M23C or F22)	207
+						208
+hl_w103	SPEAKER_01	hlM016			(original filename indicates that this is M25A)	209
+hl_w103	SPEAKER_03	hlUT046		0.31		210
+hl_w103	SPEAKER_04	hlUT047		0.07		211
+						212
+hl_w104	SPEAKER_01	hlUT048		2.29	(docx indicates this is either M27A or F20A)	213
+hl_w104	SPEAKER_02	hlUT049		21.39	(docx indicates this is either M27A or F20A)	214
+hl_w104	SPEAKER_04	hlUT050		6.69	(docx indicates this is either M27A or F20A)	215
+						216
+hl_w106	SPEAKER_00	hlM017			(original filename indicates this is M27B)	217
+hl_w106	SPEAKER_01	hlUT051		0.48		218
+						219
+hl_w107	SPEAKER_00	hlM018			(original filename indicates this is M28A)	220
+hl_w107	SPEAKER_01	hlUT052		2.95		221
+hl_w107	SPEAKER_02	hlUT053		0.64		222
+						223
+hl_w112	SPEAKER_00	hlUT054		0.52		224
+hl_w112	SPEAKER_01	hlM019	M30_-_Faetar			225
+						226
+hl_w118	SPEAKER_00	hlM020			(original filename indicates this is M34A)	227
+hl_w118	SPEAKER_01	hlUT055		0.51		228
+						229
+hl_w124	SPEAKER_01	hlM021	M44A_-_Faetar			230
+hl_w124	SPEAKER_02	hlF011	F11B_-_Faetar			231
+hl_w124	SPEAKER_03	hlUT056		0.2		232
+						233
+hl_w125	SPEAKER_00	hlM021	M44A_-_Faetar			234
+hl_w125	SPEAKER_01	hlUT057		1.59		235
+						236
+hl_w130	SPEAKER_00	hlM022			(original filename indicates this is M47A)	237
+hl_w130	SPEAKER_02	hlUT058		0.6		238
+						239
+hl_w132	SPEAKER_00	hlM023			(original filename indicates this is M47C)	240
+						241
+hl_w135	SPEAKER_00	hlM010	M56_-_Faetar			242
+hl_w135	SPEAKER_03	hlUT059		0.88		243
+						244
+hl_w152	SPEAKER_00	hlM024			(original filename indicates this is M6)	245
+						246
+hl_w153	SPEAKER_01	hlM025			(docx indicates this is M13C)	247
+hl_w153	SPEAKER_03	hlM026			(docx indicates this is M7)	248
+						249
+hl_w154	SPEAKER_00	hlM027	M70_-_Faetar			250
+hl_w154	SPEAKER_03	hlUT059		1.26		251
+hl_w154	SPEAKER_04	hlUT060		0.47		252
+						253
+hl_w157	SPEAKER_00	hlM027			(original filename indicates this is M70)	254
+						255
+hl_w158	SPEAKER_00	hlM028			(original filename indicates this is M74)	256
+hl_w158	SPEAKER_03	hlUT061		4.73		257
+						258
+hl_w159	SPEAKER_00	hlM029	M76			259
+hl_w159	SPEAKER_02	hlUT062		2.49		260
+						261
+hl_w160	SPEAKER_00	hlM030			(docx indicates this is M77)	262
+hl_w160	SPEAKER_01	hlUT063		2.62	(likely F72B)	263
+hl_w160	SPEAKER_02	hlUT064		6.62		264
+						265
+hl_w162	SPEAKER_00	hlM031	M78_-_Faetar			266
+hl_w162	SPEAKER_01	hlUT065		0.96		267
+hl_w162	SPEAKER_02	hlUT066		0.22		268
+						269
+hl_w167	SPEAKER_01	hlM026			(original filename indicates this is M7)	270
+						271
+hl_w172	SPEAKER_00	hlUT067		1.14		272
+hl_w172	SPEAKER_01	hlUT068		23.03		273
+hl_w172	SPEAKER_02	hlM032			(docx indicates this is M81)	274
+hl_w172	SPEAKER_03	hlUT069		28.44		275
+hl_w172	SPEAKER_04	hlUT070		10.06		276
+						277
+hl_w176	SPEAKER_00	hlM033			(original filename indicates this is M8C)	278
+hl_w176	SPEAKER_01	hlUT071		5.05		279
+						280
+hl_w177	SPEAKER_01	hlM034			(original filename indicates this is M9)	281
+						282
+hl_w180	SPEAKER_00	hlF034	F20_-_Faetar			283
+hl_w180	SPEAKER_02	hlUT072		0.38		284
+						285
+hl_w182	SPEAKER_00	hlF035			(original filename indicates this is F56C)	286
+Total				761.6		
