@@ -13,7 +13,7 @@ lang_suffix="$1"
 
 echo "$0 $@"  # Print the command line for logging
 
-for x in test train unlab; do
+for x in test train; do
   mkdir -p data/$x
   # rm -rf data/$x/* 
   cp -f data/local/data/wav_$x.scp data/$x/wav.scp
@@ -24,13 +24,8 @@ for x in test train unlab; do
 
   utils/utt2spk_to_spk2utt.pl < data/$x/utt2spk > data/$x/spk2utt
 
-  if [ "$x" = unlab ]; then
-    utils/fix_data_dir.sh data/$x
-    utils/validate_data_dir.sh data/$x --no-feats --no-text
-  else
-    cp -f data/local/data/text_$x data/$x/text
-    utils/validate_data_dir.sh data/$x --no-feats --non-print
-  fi
+  cp -f data/local/data/text_$x data/$x/text
+  utils/validate_data_dir.sh data/$x --no-feats --non-print
 done
 
 # I don't think we actually need this, but to keep things in order...
