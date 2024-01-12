@@ -63,7 +63,9 @@ cat bn2wav | cut -d ':' -f 1 |
   awk -v d="$(cd links; pwd -P)" '{print $1, "sox "d"/"$1".wav -t wav -b 16 - rate 16k remix 1 |"}' > wav_unlab.scp
 
 # get those durations (lots of warnings - don't worry about those)
-wav-to-duration "scp,s,o:wav_unlab.scp" "ark,t:reco2dur_unlab"
+if [ ! -f "reco2dur_unlab" ]; then
+  wav-to-duration "scp,s,o:wav_unlab.scp" "ark,t:reco2dur_unlab"
+fi
 
 # these mappings will be used to build collapsed partitions as well as a global 
 # unlabelled partition (unlab)
