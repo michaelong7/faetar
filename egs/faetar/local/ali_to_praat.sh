@@ -140,7 +140,7 @@ for tier in ("utts", "phones", "vad"):
         prev_spk = spk
 
       tier2segs = rec2tier2segs.setdefault(rec, dict())
-      interval = tier2segs.setdefault(f"Speaker {spk} {tier}", [])
+      interval = tier2segs.setdefault(f"{spk} {tier}", [])
 
       overlap_sec = prev_interval_end - float(start)
       if overlap_sec <= 0:

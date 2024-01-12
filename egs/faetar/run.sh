@@ -143,107 +143,74 @@ if [ $stage -le 5 ]; then
   $only && exit 0
 fi
 
-# cleans segmentations
+# train speaker-adaptive triphone model based on resegmentations
 if [ $stage -le 6 ]; then
+  utils/split_data.sh data/rough_reseg "$train_jobs"
   steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
-    data/rough_reseg data/lang_rough exp/mono0 exp/mono0_ali_rough_reseg
+    data/rough_reseg data/lang_rough exp/tri2 exp/tri2_ali_rough_reseg
 
+  steps/train_sat.sh --cmd "$train_cmd" 4200 40000 \
+    data/rough_reseg data/lang_rough exp/tri2_ali_rough_reseg exp/tri3
+  
   local/get_ctms.sh --with-nooverlap true --frame-shift $frame_shift \
-    data/rough_reseg data/lang_rough exp/mono0_ali_rough_reseg
-
-  local/fix_utt_names.sh data/rough_reseg data/rough_reseg_fixed_utts
+    data/rough_reseg data/lang_rough exp/tri3
 
   $only && exit 0
 fi
 
+# clean up segmentations using SAT model
 if [ $stage -le 7 ]; then
-  local/construct_nooverlap_data_dir.sh --clean false \
-    data/rough data/rough_reseg_fixed_utts exp/mono0_ali_rough_reseg data/rough_reseg_nooverlap
-    
+  steps/cleanup/clean_and_segment_data.sh \
+    --cmd "$train_cmd" --nj "$train_jobs" \
+    data/rough_reseg data/lang_rough exp/tri3 exp/rough_reseg_cleaned \
+    data/rough_reseg_cleaned
+  
+  $only && exit 0
+fi
+
+# train once again a SAT model on the cleaned segmentations
+if [ $stage -le 8 ]; then
+  steps/align_fmllr.sh --nj "$train_jobs" --cmd "$train_cmd" \
+    data/rough_reseg_cleaned data/lang_rough exp/tri3 \
+    exp/tri3_ali_rough_reseg_cleaned
+
+  steps/train_sat.sh --cmd "$train_cmd" 4200 40000 \
+    data/rough_reseg_cleaned \
+    data/lang_rough exp/tri3_ali_rough_reseg_cleaned exp/tri4
+  
+  local/get_ctms.sh --with-nooverlap true --frame-shift $frame_shift \
+    data/rough_reseg_cleaned data/lang_rough exp/tri4
+
+  $only && exit 0
+fi
+
+# construct a new data dir without overlaps, then align using tri4
+# FIXME(sdrobert): we're relying on logic from wsj/s5/local/run_segmentation.sh
+# which doesn't quite hold for segment_long_utts.sh
+#
+# A better method might be to construct a segments file via vad.scp (see
+# local/ali_to_praat.sh), then fill in those segments with the overlapping text
+# from steps/resegment_text.sh. Something like:
+#
+#   steps/resegment_text.sh \
+#     data/rough_reseg_cleaned data/lang_rough exp/tri4 \
+#     data/rough_vad exp/resegment_rough_vad
+#
+if [ $stage -le 9 ]; then
+  local/construct_nooverlap_data_dir.sh \
+    data/rough data/rough_reseg_cleaned exp/tri4 data/rough_reseg_nooverlap
   steps/compute_cmvn_stats.sh data/rough_reseg_nooverlap
 
-  steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
-    data/rough_reseg_nooverlap data/lang_rough exp/mono0 \
-    exp/mono0_ali_rough_reseg_nooverlap
-
+  steps/align_fmllr.sh --nj "$train_jobs" --cmd "$train_cmd" \
+    data/rough_reseg_nooverlap data/lang_rough exp/tri4 \
+    exp/tri4_ali_rough_reseg_nooverlap
+  
   local/get_ctms.sh --with-nooverlap true --frame-shift $frame_shift \
     data/rough_reseg_nooverlap data/lang_rough \
-    exp/mono0_ali_rough_reseg_nooverlap
+    exp/tri4_ali_rough_reseg_nooverlap
   local/ali_to_praat.sh --frame-shift $frame_shift \
-    --copy-wav $copy_wav exp/mono0_ali_rough_reseg_nooverlap \
+    --copy-wav $copy_wav exp/tri4_ali_rough_reseg_nooverlap \
     data/rough_reseg_nooverlap
-
+  
   $only && exit 0
 fi
-
-# # train speaker-adaptive triphone model based on resegmentations
-# if [ $stage -le 6 ]; then
-#   utils/split_data.sh data/rough_reseg "$train_jobs"
-#   steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
-#     data/rough_reseg data/lang_rough exp/tri2 exp/tri2_ali_rough_reseg
-
-#   steps/train_sat.sh --cmd "$train_cmd" 4200 40000 \
-#     data/rough_reseg data/lang_rough exp/tri2_ali_rough_reseg exp/tri3
-  
-#   local/get_ctms.sh --with-nooverlap true --frame-shift $frame_shift \
-#     data/rough_reseg data/lang_rough exp/tri3
-
-#   $only && exit 0
-# fi
-
-# # clean up segmentations using SAT model
-# if [ $stage -le 7 ]; then
-#   steps/cleanup/clean_and_segment_data.sh \
-#     --cmd "$train_cmd" --nj "$train_jobs" \
-#     data/rough_reseg data/lang_rough exp/tri3 exp/rough_reseg_cleaned \
-#     data/rough_reseg_cleaned
-  
-#   $only && exit 0
-# fi
-
-# # train once again a SAT model on the cleaned segmentations
-# if [ $stage -le 8 ]; then
-#   steps/align_fmllr.sh --nj "$train_jobs" --cmd "$train_cmd" \
-#     data/rough_reseg_cleaned data/lang_rough exp/tri3 \
-#     exp/tri3_ali_rough_reseg_cleaned
-
-#   steps/train_sat.sh --cmd "$train_cmd" 4200 40000 \
-#     data/rough_reseg_cleaned \
-#     data/lang_rough exp/tri3_ali_rough_reseg_cleaned exp/tri4
-  
-#   local/get_ctms.sh --with-nooverlap true --frame-shift $frame_shift \
-#     data/rough_reseg_cleaned data/lang_rough exp/tri4
-
-#   $only && exit 0
-# fi
-
-# # construct a new data dir without overlaps, then align using tri4
-# # FIXME(sdrobert): we're relying on logic from wsj/s5/local/run_segmentation.sh
-# # which doesn't quite hold for segment_long_utts.sh
-# #
-# # A better method might be to construct a segments file via vad.scp (see
-# # local/ali_to_praat.sh), then fill in those segments with the overlapping text
-# # from steps/resegment_text.sh. Something like:
-# #
-# #   steps/resegment_text.sh \
-# #     data/rough_reseg_cleaned data/lang_rough exp/tri4 \
-# #     data/rough_vad exp/resegment_rough_vad
-# #
-# if [ $stage -le 9 ]; then
-#   local/construct_nooverlap_data_dir.sh \
-#     data/rough data/rough_reseg_cleaned exp/tri4 data/rough_reseg_nooverlap
-#   steps/compute_cmvn_stats.sh data/rough_reseg_nooverlap
-
-#   steps/align_fmllr.sh --nj "$train_jobs" --cmd "$train_cmd" \
-#     data/rough_reseg_nooverlap data/lang_rough exp/tri4 \
-#     exp/tri4_ali_rough_reseg_nooverlap
-  
-#   local/get_ctms.sh --with-nooverlap true --frame-shift $frame_shift \
-#     data/rough_reseg_nooverlap data/lang_rough \
-#     exp/tri4_ali_rough_reseg_nooverlap
-#   local/ali_to_praat.sh --frame-shift $frame_shift \
-#     --copy-wav $copy_wav exp/tri4_ali_rough_reseg_nooverlap \
-#     data/rough_reseg_nooverlap
-  
-#   $only && exit 0
-# fi
