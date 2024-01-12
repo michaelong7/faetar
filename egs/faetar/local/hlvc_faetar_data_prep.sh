@@ -19,6 +19,23 @@ if [ ! -d "$2" ]; then
   exit 1
 fi
 
+# find all unique files of various types and creates bn2 files
+# (we add a guard to avoid regenerating if we've already completed it once)
+function find_files () {
+  search_dir="$1"
+  suffix="$2"
+
+  for x in txt wav; do
+    if [ ! -f "${x}list_${suffix}" ]; then
+      find "$search_dir" -name "*.$x" |
+      sort -V |
+      tee "${x}list_${suffix}" |
+      tr '\n' '\0' |
+      xargs -I{} -0 bash -c 'filename="$(basename "$1" '".$x"')"; echo ""$filename":"$1""' -- {} > "bn2${x}_${suffix}"
+    fi
+  done
+}
+
 test_dir="$1"
 train_dir="$2"
 dir="$(pwd -P)/data/local/data"
@@ -28,14 +45,12 @@ utils="$(pwd -P)/utils"
 
 cd "$dir"
 
-# find all unique files of various types and creates bn2 files
-for x in txt wav; do
-  find "$test_dir" -name "*.$x" |
-  sort -V |
-  tee "${x}list" |
-  tr '\n' '\0' |
-  xargs -I{} -0 bash -c 'filename="$(basename "$1" '".$x"')"; echo ""$filename":"$1""' -- {} > "bn2${x}"
-done
+find_files "$test_dir" "test"
+find_files "$train_dir" "train"
+
+# merges bn2wav_train and bn2wav_test, and wavlist_traind and wavlist_test
+cat "bn2wav_test" "bn2wav_train" | sort -V > "bn2wav"
+cat "wavlist_test" "wavlist_train" | sort -V > "wavlist"
 
 # make symbolic links to wav files in links/ directory
 mkdir -p links/
@@ -58,6 +73,8 @@ cat reco2dur_unlab | \
 cut -d ' ' -f 1 segments_unlab > unlab.uttlist
 cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
 paste -d ' ' unlab.uttlist <(cut -d '-' -f 1-2 unlab.uttlist) > utt2spk_unlab
+
+exit 20
 
 # convert eaf files to <utt_id> <rec_id> <spkr_id> <start_s> <end_s> <trans>
 cat bn2eaf | tr '\n' '\0' |
