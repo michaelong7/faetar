@@ -2,8 +2,8 @@
 
 . ./path.sh
 
-if [ $# -ne 1 ]; then
-  echo "Usage: $0 clean-hlvc-root-data-dir"
+if [ $# -ne 2 ]; then
+  echo "Usage: $0 test-dir train-dir"
   exit 1
 fi
 
@@ -14,7 +14,13 @@ if [ ! -d "$1" ]; then
   exit 1
 fi
 
-fh_dir="$1"
+if [ ! -d "$2" ]; then
+  echo "$0: '$2' is not a directory"
+  exit 1
+fi
+
+test_dir="$1"
+train_dir="$2"
 dir="$(pwd -P)/data/local/data"
 mkdir -p "$dir"
 local="$(pwd -P)/local"
@@ -23,12 +29,12 @@ utils="$(pwd -P)/utils"
 cd "$dir"
 
 # find all unique files of various types and creates bn2 files
-for x in eaf docx wav; do
-  find "$fh_dir" -name "*.$x" |
-  sort |
+for x in txt wav; do
+  find "$test_dir" -name "*.$x" |
+  sort -V |
   tee "${x}list" |
   tr '\n' '\0' |
-  xargs -I{} -0 bash -c 'filename="$(basename "$1" '".$x"')"; wavname="$(echo "$filename" | cut -d "_" -f 1,2)"; echo ""$wavname":"$1""' -- {} > "bn2${x}"
+  xargs -I{} -0 bash -c 'filename="$(basename "$1" '".$x"')"; echo ""$filename":"$1""' -- {} > "bn2${x}"
 done
 
 # make symbolic links to wav files in links/ directory

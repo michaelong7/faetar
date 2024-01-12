@@ -48,14 +48,9 @@ if [ $stage -le 0 ]; then
     exit 1
   fi
 
-  local/test_prep.sh "$test_dir"
+  local/hlvc_faetar_data_prep.sh "$test_dir" "$train_dir"
 
   exit 20
-
-##################################################33
-
-  local/train_prep.sh "$train_dir"
-
 
 ##############################################################3
 
