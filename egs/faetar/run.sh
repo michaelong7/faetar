@@ -8,6 +8,7 @@ feat_jobs=4
 train_jobs=4
 decode_jobs=8
 only=false
+copy_wav=false
 graph_opts="--min-lm-state-count 1 --discounting-constant 0.15"
 help_message="Train model on cleaned and split HLVC Faetar subset
 
@@ -72,45 +73,53 @@ fi
 
 frame_shift=$(cat data/train/frame_shift)
 
-# make speaker-independent monophone model off core partition
+# make speaker-independent monophone model off train partition
 if [ $stage -le 2 ]; then
-  steps/train_mono.sh --cmd "$train_cmd" --nj "$train_jobs" \
-    data/core data/lang_rough exp/mono0
-  
+  if [ ! -f "exp/mono0/40.mdl" ]; then
+    steps/train_mono.sh --cmd "$train_cmd" --nj "$train_jobs" \
+      data/train data/lang_train exp/mono0
+  fi
   local/get_ctms.sh --frame-shift $frame_shift \
-    data/core data/lang_rough exp/mono0
+    data/train data/lang_train exp/mono0
   local/ali_to_praat.sh --frame-shift $frame_shift \
-    --copy-wav $copy_wav exp/mono0 data/core
+    --copy-wav $copy_wav exp/mono0 data/train
 
   $only && exit 0
 fi
 
-# # make speaker-independent triphone model off core partition
-# if [ $stage -le 3 ]; then
-#   steps/train_deltas.sh --cmd "$train_cmd" 2000 10000 \
-#     data/core data/lang_rough exp/mono0 exp/tri1
+# make speaker-independent triphone model off train partition
+if [ $stage -le 3 ]; then
+  if [ ! -f "exp/tri1/35.mdl" ]; then
+    steps/train_deltas.sh --cmd "$train_cmd" 2000 10000 \
+      data/train data/lang_train exp/mono0 exp/tri1
+  fi
 
-#   local/get_ctms.sh --frame-shift $frame_shift \
-#     data/core data/lang_rough exp/tri1
-#   local/ali_to_praat.sh --frame-shift $frame_shift \
-#     --copy-wav $copy_wav exp/tri1 data/core
+  local/get_ctms.sh --frame-shift $frame_shift \
+    data/train data/lang_train exp/tri1
+  local/ali_to_praat.sh --frame-shift $frame_shift \
+    --copy-wav $copy_wav exp/tri1 data/train
 
-#   $only && exit 0
-# fi
+  $only && exit 0
+fi
 
-# # same, but with MLLT
-# if [ $stage -le 4 ]; then
-#   steps/train_lda_mllt.sh --cmd "$train_cmd" \
-#     --splice-opts "--left-context=3 --right-context=3" 2500 15000 \
-#     data/core data/lang_rough exp/tri1 exp/tri2
+# same, but with MLLT
+if [ $stage -le 4 ]; then
+  if [ ! -f "exp/tri2/35.mdl" ]; then
+    steps/train_lda_mllt.sh --cmd "$train_cmd" \
+      --splice-opts "--left-context=3 --right-context=3" 2500 15000 \
+      data/train data/lang_train exp/tri1 exp/tri2
+  fi
 
-#   local/get_ctms.sh --frame-shift $frame_shift \
-#     data/core data/lang_rough exp/tri2
-#   local/ali_to_praat.sh --frame-shift $frame_shift \
-#     --copy-wav $copy_wav exp/tri2 data/core
+  local/get_ctms.sh --frame-shift $frame_shift \
+    data/train data/lang_train exp/tri2
+  local/ali_to_praat.sh --frame-shift $frame_shift \
+    --copy-wav $copy_wav exp/tri2 data/train
 
-#   $only && exit 0
-# fi
+  $only && exit 0
+fi
+
+exit 21
+##############################################################3
 
 # We're roughly following along with wsj/s5/local/run_segmentation_long_utts.sh
 #
@@ -143,13 +152,6 @@ if [ $stage -le 6 ]; then
     data/rough_reseg data/lang_rough exp/mono0_ali_rough_reseg
 
   local/fix_utt_names.sh data/rough_reseg data/rough_reseg_fixed_utts
-
-  # # change conf_thresh later
-  # local/clean_and_segment_data.sh \
-  #   --cmd "$train_cmd" --nj "$train_jobs" \
-  #   --conf-thresh 1.0 \
-  #   data/rough_reseg data/lang_rough exp/mono0_ali_rough_reseg exp/rough_reseg_cleaned \
-  #   data/rough_reseg_cleaned
 
   $only && exit 0
 fi
@@ -245,10 +247,3 @@ fi
   
 #   $only && exit 0
 # fi
-
-# # TODO
-# # - incorporate some pre-trained speaker diarization model to determine
-# #   when speakers change, e.g. https://kaldi-asr.org/models/m6
-# # - set aside interviewer speech (filtered out in dump_eafs.py; modify filter
-# #   regexes), then train a speaker identification system to identify if/when
-# #   Naomi is speaking in the partition
