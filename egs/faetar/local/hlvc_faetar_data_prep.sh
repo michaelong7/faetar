@@ -36,6 +36,22 @@ function find_files () {
   done
 }
 
+# construct kaldi files for given partition
+function construct_kaldi_files () {
+  partition_label="$1"
+
+  join -1 2 -2 1 <(cut -d ' ' -f 1,2 < segments_unlab) <(tr ':' ' ' < "bn2txt_${partition_label}") |
+  tr '\n' '\0' |
+  xargs -I{} -0 bash -c 'read -ra v <<< "$1"; text="$(cat ${v[2]})" ; printf "%s %s\n" "${v[1]}" "$text"' -- {} > "text_${partition_label}"
+  cut -d ' ' -f 1 "text_${partition_label}" > "${partition_label}.uttlist"
+  join utt2spk_unlab "${partition_label}.uttlist" > "utt2spk_${partition_label}"
+  join "${partition_label}.uttlist" segments_unlab > "segments_${partition_label}"
+  cut -d ' ' -f 2 "segments_${partition_label}" | sort -u > "${partition_label}.recolist"
+  join "${partition_label}.recolist" wav_unlab.scp > "wav_${partition_label}.scp"
+  join "${partition_label}.recolist" reco2dur_unlab > "reco2dur_${partition_label}"
+
+}
+
 test_dir="$1"
 train_dir="$2"
 dir="$(pwd -P)/data/local/data"
@@ -45,61 +61,41 @@ utils="$(pwd -P)/utils"
 
 cd "$dir"
 
-# find_files "$test_dir" "test"
-# find_files "$train_dir" "train"
+find_files "$test_dir" "test"
+find_files "$train_dir" "train"
 
-# # merges bn2wav_train and bn2wav_test, and wavlist_traind and wavlist_test
-# cat "bn2wav_test" "bn2wav_train" | sort -t ':' -k 1,1 > "bn2wav"
-# cat "wavlist_test" "wavlist_train" | sort -t ':' -k 1,1 > "wavlist"
+# merges bn2wav_train and bn2wav_test, and wavlist_traind and wavlist_test
+cat "bn2wav_test" "bn2wav_train" | sort -t ':' -k 1,1 > "bn2wav"
+cat "wavlist_test" "wavlist_train" | sort -t ':' -k 1,1 > "wavlist"
 
-# # make symbolic links to wav files in links/ directory
-# mkdir -p links/
-# rm -f links/*
-# tr '\n' '\0' < wavlist |
-#   xargs -0 -I{} bash -c 'v="$(basename "$1" .wav)"; ln -sf "$1" "links/${v}.wav"' -- "{}"
+# make symbolic links to wav files in links/ directory
+mkdir -p links/
+rm -f links/*
+tr '\n' '\0' < wavlist |
+  xargs -0 -I{} bash -c 'v="$(basename "$1" .wav)"; ln -sf "$1" "links/${v}.wav"' -- "{}"
 
-# # now we can use Kaldi's table format
-# cat bn2wav | cut -d ':' -f 1 |
-#   awk -v d="$(cd links; pwd -P)" '{print $1, "sox "d"/"$1".wav -t wav -b 16 - rate 16k remix 1 |"}' > wav_unlab.scp
+# now we can use Kaldi's table format
+cat bn2wav | cut -d ':' -f 1 |
+  awk -v d="$(cd links; pwd -P)" '{print $1, "sox "d"/"$1".wav -t wav -b 16 - rate 16k remix 1 |"}' > wav_unlab.scp
 
-# # get those durations (lots of warnings - don't worry about those)
-# if [ ! -f "reco2dur_unlab" ]; then
-#   wav-to-duration "scp,s,o:wav_unlab.scp" "ark,t:reco2dur_unlab"
-# fi
+# get those durations (lots of warnings - don't worry about those)
+if [ ! -f "reco2dur_unlab" ]; then
+  wav-to-duration "scp,s,o:wav_unlab.scp" "ark,t:reco2dur_unlab"
+fi
 
-# # these mappings will be used to build collapsed partitions as well as a global 
-# # unlabelled partition (unlab)
-# cat reco2dur_unlab | \
-#   xargs -I{} bash -c 'read -ra v <<< "$1"; speaker=$(cut -d "_" -f 2 <<< "${v[0]}") ms=$(echo "${v[1]} * 100" | bc -l); printf "%s-%s-0000000-%06.0f %s 0.00 %.2f\n" "${v[0]}" "$speaker" "$ms" "${v[0]}" "${v[1]}"' -- {} \
-#   > segments_unlab
-# cut -d ' ' -f 1 segments_unlab > unlab.uttlist
-# cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
-# paste -d ' ' unlab.uttlist <(cut -d '-' -f 2 unlab.uttlist) > utt2spk_unlab
+# these mappings will be used to build collapsed partitions as well as a global 
+# unlabelled partition (unlab)
+cat reco2dur_unlab | \
+  xargs -I{} bash -c 'read -ra v <<< "$1"; speaker=$(cut -d "_" -f 2 <<< "${v[0]}") ms=$(echo "${v[1]} * 100" | bc -l); printf "%s-%s-0000000-%06.0f %s 0.00 %.2f\n" "${v[0]}" "$speaker" "$ms" "${v[0]}" "${v[1]}"' -- {} \
+  > segments_unlab
+cut -d ' ' -f 1 segments_unlab > unlab.uttlist
+cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
+paste -d ' ' unlab.uttlist <(cut -d '-' -f 2 unlab.uttlist) > utt2spk_unlab
 
-# # construct kaldi files for train partition
-
-# join -1 2 -2 1 <(cut -d ' ' -f 1,2 < segments_unlab) <(tr ':' ' ' < bn2txt_train) |
-# tr '\n' '\0' |
-# xargs -I{} -0 bash -c 'read -ra v <<< "$1"; text="$(cat ${v[2]})" ; printf "%s %s\n" "${v[1]}" "$text"' -- {} > "text_train"
-cut -d ' ' -f 1 text_train > train.uttlist
-join utt2spk_unlab train.uttlist > utt2spk_train
-cut -d ' ' -f 1 text_train | join train.uttlist - > segments_train
-cut -d ' ' -f 2 segments_train | sort -u > train.recolist
-join train.recolist wav_unlab.scp > wav_train.scp
-join train.recolist reco2dur_unlab > reco2dur_train
-
-exit 20
-
-# rough partition = core_collapsed + doc
-cat {doc,core_collapsed}.recolist | sort -u > rough.recolist
-join rough.recolist wav_unlab.scp > wav_rough.scp
-join rough.recolist reco2dur_unlab > reco2dur_rough
-cat {doc,core_collapsed}.uttlist | sort -u > rough.uttlist
-join rough.uttlist segments_unlab > segments_rough
-join rough.uttlist utt2spk_unlab > utt2spk_rough
-cat text_{doc,core_collapsed} | sort -k 1,1 -s -u > text_rough
+construct_kaldi_files "train"
+construct_kaldi_files "test"
 
 # build LM
-cut -d ' ' -f 2- text_rough | \
+cut -d ' ' -f 2- text_train | \
  "$local/ngram_lm.py" -o 1 --word-delim-expr " " | \
  gzip -c > "lm.tri-noprune.gz"
