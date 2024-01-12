@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-usage="Usage: $0 [-h] [--stage I] [--only {true,false}] [--hlvc-dir DIR] [--feat-jobs N] [--train-jobs N] [--decode-jobs N] [--copy-wav {true,false}]"
+usage="Usage: $0 [-h] [--stage I] [--only {true,false}] [--test-dir DIR] [--train-dir DIR] [--feat-jobs N] [--train-jobs N] [--decode-jobs N]"
 stage=0
-hlvc_dir=
+test_dir=
+train_dir=
 feat_jobs=4
 train_jobs=4
 decode_jobs=8
 only=false
-copy_wav=false
 graph_opts="--min-lm-state-count 1 --discounting-constant 0.15"
 help_message="Train model on cleaned and split HLVC Faetar subset
 
@@ -17,15 +17,14 @@ Options
 -h            Display this help message
 --stage       Start from this stage (deft: $stage)
 --only        Run only one stage (deft: $only)
---hlvc-dir    Path to cleaned HLVC directory (deft: '$hlvc_dir')
+--test-dir    Path to split test directory (deft: '$test_dir')
+--train-dir    Path to split train directory (deft: '$train_dir')
 --feat-jobs   Number of jobs to run in parallel when computing features
               (deft: $feat_jobs)
 --train-jobs  Number of jobs to run in parallel when training models
               (deft: $train_jobs)
 --decode-jobs Number of jobs to run in paralllel when decoding audio
               (deft: $decode_jobs)
---copy-wav    If true, when generating praat TextGrid files, copy wav files
-              to the directory as well (deft: $copy_wav)
 "
 
 
@@ -41,23 +40,31 @@ fi
 set -e
 
 if [ $stage -le 0 ]; then
-  if [ -z "$hlvc_dir" ]; then
-    echo "--hlvc-dir unspecified!"
+  if [ -z "$test_dir" ]; then
+    echo "--test-dir unspecified!"
     exit 1
-  fi
-  if [ $(find "$hlvc_dir" -name 'hl_w011.wav' | head -n 1 | wc -l) != 1 ]; then
-    echo "Could not find hl_w011.wav in '$hlvc_dir'"
-    if [ $(find "$hlvc_dir" -name 'FAETAR (Homeland)' -type d | head -n 1 | wc -l) = 1 ]; then
-      echo "This could be the unclean version." 
-      echo "Try calling:"
-      echo "  local/remake_corpus.sh mappings/wav_mapping_homeland.txt '$hlvc_dir'"
-      echo "  local/remake_corpus.sh mappings/wav_mapping_heritage.txt '$hlvc_dir'"
-      echo "and setting --hlvc-dir to '${hlvc_dir}_cleaned'"
-    fi
+  elif [ -z "$train_dir" ]; then
+    echo "--train-dir unspecified!"
     exit 1
   fi
 
-  local/hlvc_faetar_data_prep.sh "$hlvc_dir"
+  local/test_prep.sh "$test_dir"
+
+  exit 20
+
+##################################################33
+
+  local/train_prep.sh "$train_dir"
+
+
+##############################################################3
+
+
+
+
+
+
+
   local/hlvc_faetar_prepare_dict.sh _rough
   utils/prepare_lang.sh data/local/dict_rough \
                 "[x]" data/local/lang_tmp_rough data/lang_rough
