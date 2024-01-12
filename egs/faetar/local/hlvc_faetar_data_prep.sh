@@ -19,7 +19,7 @@ if [ ! -d "$2" ]; then
   exit 1
 fi
 
-# find all unique files of various types
+# find all unique files of various types and creates bn2 files
 # (we add a guard to avoid regenerating if we've already completed it once)
 function find_files () {
   search_dir="$1"
@@ -29,7 +29,9 @@ function find_files () {
     if [ ! -f "${x}list_${suffix}" ]; then
       find "$search_dir" -name "*.$x" |
       sort -V |
-      tee "${x}list_${suffix}"
+      tee "${x}list_${suffix}" |
+      tr '\n' '\0' |
+      xargs -I{} -0 bash -c 'filename="$(basename "$1" '".$x"')"; echo ""$filename":"$1""' -- {} > "bn2${x}_${suffix}"
     fi
   done
 }
@@ -50,38 +52,36 @@ find_files "$train_dir" "train"
 cat "bn2wav_test" "bn2wav_train" | sort -V > "bn2wav"
 cat "wavlist_test" "wavlist_train" | sort -V > "wavlist"
 
-# make symbolic links to wav files in links/ directory
-mkdir -p links/
-rm -f links/*
-tr '\n' '\0' < wavlist |
-  xargs -0 -I{} bash -c 'v="$(basename "$1" .wav)"; ln -sf "$1" "links/${v}.wav"' -- "{}"
+# # make symbolic links to wav files in links/ directory
+# mkdir -p links/
+# rm -f links/*
+# tr '\n' '\0' < wavlist |
+#   xargs -0 -I{} bash -c 'v="$(basename "$1" .wav)"; ln -sf "$1" "links/${v}.wav"' -- "{}"
 
-# now we can use Kaldi's table format
-cat bn2wav | cut -d ':' -f 1 |
-  awk -v d="$(cd links; pwd -P)" '{print $1, "sox "d"/"$1".wav -t wav -b 16 - rate 16k remix 1 |"}' > wav_unlab.scp
+# # now we can use Kaldi's table format
+# cat bn2wav | cut -d ':' -f 1 |
+#   awk -v d="$(cd links; pwd -P)" '{print $1, "sox "d"/"$1".wav -t wav -b 16 - rate 16k remix 1 |"}' > wav_unlab.scp
 
-# get those durations (lots of warnings - don't worry about those)
-if [ ! -f "reco2dur_unlab" ]; then
-  wav-to-duration "scp,s,o:wav_unlab.scp" "ark,t:reco2dur_unlab"
-fi
+# # get those durations (lots of warnings - don't worry about those)
+# if [ ! -f "reco2dur_unlab" ]; then
+#   wav-to-duration "scp,s,o:wav_unlab.scp" "ark,t:reco2dur_unlab"
+# fi
 
-# these mappings will be used to build collapsed partitions as well as a global 
-# unlabelled partition (unlab)
-cat reco2dur_unlab | \
-  xargs -I{} bash -c 'read -ra v <<< "$1"; ms=$(echo "${v[1]} * 100" | bc -l); printf "%s-1-0000000-%06.0f %s 0.00 %.2f\n" "${v[0]}" "$ms" "${v[0]}" "${v[1]}"' -- {} \
-  > segments_unlab
-cut -d ' ' -f 1 segments_unlab > unlab.uttlist
-cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
-paste -d ' ' unlab.uttlist <(cut -d '-' -f 1-2 unlab.uttlist) > utt2spk_unlab
+# # these mappings will be used to build collapsed partitions as well as a global 
+# # unlabelled partition (unlab)
+# cat reco2dur_unlab | \
+#   xargs -I{} bash -c 'read -ra v <<< "$1"; speaker=$(cut -d "_" -f 2 <<< "${v[0]}") ms=$(echo "${v[1]} * 100" | bc -l); printf "%s-%s-0000000-%06.0f %s 0.00 %.2f\n" "${v[0]}" "$speaker" "$ms" "${v[0]}" "${v[1]}"' -- {} \
+#   > segments_unlab
+# cut -d ' ' -f 1 segments_unlab > unlab.uttlist
+# cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
+# paste -d ' ' unlab.uttlist <(cut -d '-' -f 1-2 unlab.uttlist) > utt2spk_unlab
 
-# construct kaldi files for train partition (labelled core to align with past scripts)
+# # construct kaldi files for train partition (labelled core to align with past scripts)
 
-echo "" > text_core
-while read -r file; do
-  echo 
-done < "txtlist_train"
-
-xargs 'echo; cat' < "txtlist_train" > text_core
+# join -1 2 -2 1 <(sort segments_unlab | cut -d ' ' -f 1,2) <(tr ':' ' ' < bn2txt_train | sort) |
+# tr '\n' '\0' |
+# xargs -I{} -0 bash -c 'read -ra v <<< "$1"; text="$(cat ${v[2]})" ; printf "%s %s\n" "${v[1]}" "$text"' -- {} |
+# sort -V > "text_core"
 
 exit 20
 
@@ -188,54 +188,7 @@ join rough.uttlist segments_unlab > segments_rough
 join rough.uttlist utt2spk_unlab > utt2spk_rough
 cat text_{doc,core_collapsed} | sort -k 1,1 -s -u > text_rough
 
-# # construct text files
-# filename_list="$(cut -d ' ' -f 1 text_rough | cut -d '-' -f 1)"
-# mkdir -p "${1}/textfiles/"
-# for ((i=1;i<=$(wc -l < text_rough);i++)); do
-#   filename="$(awk -v line=$i 'NR==line {print $0}' <(printf "%s" "$filename_list"))"
-#   awk -v line=$i 'NR==line {print $0}' text_rough |
-#   cut -d ' ' -f 2- > "${1}/textfiles/${filename}.txt"
-# done
-
 # build LM
 cut -d ' ' -f 2- text_rough | \
  "$local/ngram_lm.py" -o 1 --word-delim-expr " " | \
  gzip -c > "lm.tri-noprune.gz"
-
-# dumping grounds
-
-# keep track of which files we don't have eafs for
-# comm -23 <(cut -d ':' -f 1 reco2bn) <(cut -d ' ' -f 2 eaf_dump_core | uniq) | \
-#   join -t ':' - reco2bn | cut -d ':' -f 2 | sort -u > bn_notrans_
-
-# find "$fh_dir" -name 'Speaker_catalog_2019.xls' -print0 | \
-#   xargs -I{} -0 python -c '
-# import xlrd
-# book = xlrd.open_workbook("{}")
-# sh = book.sheet_by_name("Faeto")
-# for idx in range(1, sh.nrows):
-#   row = sh.row(idx)
-#   spk = row[1].value
-#   if not spk:
-#     continue
-#   bns = row[17].value if row[16].value in ("", "x") else row[16].value
-#   if bns == "x":
-#     continue
-#   print(f"{bns}:{spk}")
-# ' > "$local/spk2bn"
-
-# determine possible speakers within each wav file
-# prefers earliest tapes
-# perl -lne 'print /([MF]\d\d*)/,":",$_ if /[MF]\d\d*/' bn_notrans.1 | \
-#   sort -t ':' -k 1,1 -u > spk2bn_notrans.1
-
-# find "$fh_dir" -name '*.eaf' | \
-#   perl -lne 'print /([MF]\d\d*)/,":",$_ if /[MF]\d\d*/' | \
-#   grep -vF "problematic" | \
-#   sort -t ':' -k 1,1 | \
-#   "$local/combine_colon_delimited_duplicates.awk" | \
-#   join -t ':' spk2bn_notrans.1 - | \
-#   cut -d ':' -f 2- > bn2eaf_dups.2
-
-# mkdir -p wavs
-# cat reco2bn | | tr '\n' '\0' | xargs -0 -I{} -P 10 bash -c 'IFS=: read -ra v <<< "$1"; cp -f "${v[1]}" "wavs/${v[0]}.wav"' -- "{}"
