@@ -74,7 +74,7 @@ cd "$dir"
 #   > segments_unlab
 # cut -d ' ' -f 1 segments_unlab > unlab.uttlist
 # cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
-paste -d ' ' unlab.uttlist <(cut -d '-' -f 2 unlab.uttlist) > utt2spk_unlab
+# paste -d ' ' unlab.uttlist <(cut -d '-' -f 2 unlab.uttlist) > utt2spk_unlab
 
 # # construct kaldi files for train partition
 
@@ -89,60 +89,6 @@ join train.recolist wav_unlab.scp > wav_train.scp
 join train.recolist reco2dur_unlab > reco2dur_train
 
 exit 20
-
-# kaldi likes utterances sorted by speaker id first. utterance ids have
-# DEADBEEF inserted in them, to be replaced by the speaker id
-sed -e 's/^.*-DEADBEEF\([^ ]*\) \(.*\)$/\2\1/' utt2spk_core > core.uttlist
-for x in text segments utt2spk; do
-  paste -d ' ' core.uttlist <(cut -d ' ' -f 2- ${x}_core) | sort > ${x}_core_
-  mv ${x}_core{_,}
-done
-sort core.uttlist > core.uttlist_
-mv core.uttlist{_,}
-
-# there could be more than one docx per recording, but they'll be ranked
-# by suffixes (t01, t02, etc.). Take the first one
-awk '{
-  match($0, /[0-9][0-9]*\.docx$/);
-  t=substr($0,RSTART, RLENGTH-5);
-  print t":"$0}' bn2docx |
-  sort -t ':' -k 2,2 -k 1,1n |
-  sort -t ':' -k 2,2 -us |
-  cut -d ':' -f 2- > bn2docx_toprank
-
-# take the docs we have recordings for
-cut -d ':' -f 1 bn2docx_toprank > doc.recolist
-
-# make some of the doc partition based off reco
-join doc.recolist wav_unlab.scp > wav_doc.scp
-filter_scp.pl -f 2 doc.recolist segments_unlab > segments_doc
-join doc.recolist reco2dur_unlab > reco2dur_doc
-
-# construct transcriptions for _doc partition
-cut -d ':' -f 2 bn2docx_toprank |
-  tr '\n' '\0' |
-  xargs -I{} -0 "$local/doc_to_text.sh" "{}" |
-  paste -d ' ' <(cut -d ' ' -f 1 segments_doc) - |
-  perl -CS -n "$local/sanitize_text.pl" > text_doc
-
-# make the rest of the files for _doc
-cut -d ' ' -f 1 text_doc > doc.uttlist
-join doc.uttlist utt2spk_unlab > utt2spk_doc
-join doc.uttlist segments_unlab > segments_doc
-
-# make "core_collapsed" partition in which all segmented utterances are
-# appended together
-cp -f wav_core{,_collapsed}.scp
-cp -f reco2dur_core{,_collapsed}
-cp -f core{,_collapsed}.recolist
-filter_scp.pl -f 2 core_collapsed.recolist segments_unlab \
-  > segments_core_collapsed
-cut -d ' ' -f 1 segments_core_collapsed > core_collapsed.uttlist
-sed 's/-[0-9]-[0-9]*-[0-9]*//' text_core | \
-  awk -F ' ' -f "$local/combine_colon_delimited_duplicates.awk" | \
-  cut -d ' ' -f 2- | \
-  paste -d ' ' core_collapsed.uttlist - > text_core_collapsed
-join core_collapsed.uttlist utt2spk_unlab > utt2spk_core_collapsed
 
 # rough partition = core_collapsed + doc
 cat {doc,core_collapsed}.recolist | sort -u > rough.recolist
