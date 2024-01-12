@@ -49,8 +49,8 @@ find_files "$test_dir" "test"
 find_files "$train_dir" "train"
 
 # merges bn2wav_train and bn2wav_test, and wavlist_traind and wavlist_test
-cat "bn2wav_test" "bn2wav_train" | sort > "bn2wav"
-cat "wavlist_test" "wavlist_train" | sort > "wavlist"
+cat "bn2wav_test" "bn2wav_train" | sort -t ':' -k 1,1 > "bn2wav"
+cat "wavlist_test" "wavlist_train" | sort -t ':' -k 1,1 > "wavlist"
 
 # make symbolic links to wav files in links/ directory
 mkdir -p links/
