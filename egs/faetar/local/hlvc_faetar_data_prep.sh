@@ -74,14 +74,14 @@ cd "$dir"
 #   > segments_unlab
 # cut -d ' ' -f 1 segments_unlab > unlab.uttlist
 # cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
-# paste -d ' ' unlab.uttlist <(cut -d '-' -f 1-2 unlab.uttlist) > utt2spk_unlab
+paste -d ' ' unlab.uttlist <(cut -d '-' -f 2 unlab.uttlist) > utt2spk_unlab
 
 # # construct kaldi files for train partition
 
 # join -1 2 -2 1 <(cut -d ' ' -f 1,2 < segments_unlab) <(tr ':' ' ' < bn2txt_train) |
 # tr '\n' '\0' |
 # xargs -I{} -0 bash -c 'read -ra v <<< "$1"; text="$(cat ${v[2]})" ; printf "%s %s\n" "${v[1]}" "$text"' -- {} > "text_train"
-# cut -d ' ' -f 1 text_train > train.uttlist
+cut -d ' ' -f 1 text_train > train.uttlist
 join utt2spk_unlab train.uttlist > utt2spk_train
 cut -d ' ' -f 1 text_train | join train.uttlist - > segments_train
 cut -d ' ' -f 2 segments_train | sort -u > train.recolist
