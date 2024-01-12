@@ -19,7 +19,7 @@ if [ ! -d "$2" ]; then
   exit 1
 fi
 
-# find all unique files of various types and creates bn2 files
+# find all unique files of various types
 # (we add a guard to avoid regenerating if we've already completed it once)
 function find_files () {
   search_dir="$1"
@@ -29,9 +29,7 @@ function find_files () {
     if [ ! -f "${x}list_${suffix}" ]; then
       find "$search_dir" -name "*.$x" |
       sort -V |
-      tee "${x}list_${suffix}" |
-      tr '\n' '\0' |
-      xargs -I{} -0 bash -c 'filename="$(basename "$1" '".$x"')"; echo ""$filename":"$1""' -- {} > "bn2${x}_${suffix}"
+      tee "${x}list_${suffix}"
     fi
   done
 }
@@ -75,6 +73,15 @@ cat reco2dur_unlab | \
 cut -d ' ' -f 1 segments_unlab > unlab.uttlist
 cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
 paste -d ' ' unlab.uttlist <(cut -d '-' -f 1-2 unlab.uttlist) > utt2spk_unlab
+
+# construct kaldi files for train partition (labelled core to align with past scripts)
+
+echo "" > text_core
+while read -r file; do
+  echo 
+done < "txtlist_train"
+
+xargs 'echo; cat' < "txtlist_train" > text_core
 
 exit 20
 
