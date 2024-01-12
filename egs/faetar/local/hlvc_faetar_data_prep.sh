@@ -90,7 +90,7 @@ cat reco2dur_unlab | \
   > segments_unlab
 cut -d ' ' -f 1 segments_unlab > unlab.uttlist
 cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
-paste -d ' ' unlab.uttlist <(cut -d '-' -f 2 unlab.uttlist) > utt2spk_unlab
+paste -d ' ' unlab.uttlist <(cut -d '-' -f 1,2 unlab.uttlist) > utt2spk_unlab
 
 construct_kaldi_files "train"
 construct_kaldi_files "test"

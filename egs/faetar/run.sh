@@ -48,22 +48,17 @@ if [ $stage -le 0 ]; then
     exit 1
   fi
 
-  local/hlvc_faetar_data_prep.sh "$test_dir" "$train_dir"
+  # local/hlvc_faetar_data_prep.sh "$test_dir" "$train_dir"
+  # local/hlvc_faetar_prepare_dict.sh _train
+  utils/prepare_lang.sh data/local/dict_train \
+                "[x]" data/local/lang_tmp_train data/lang_train
+  local/hlvc_faetar_format_data.sh _train
 
-  exit 20
-
-##############################################################3
-
-
-
-
-
+  exit 21
+  ##############################################################3
 
 
-  local/hlvc_faetar_prepare_dict.sh _rough
-  utils/prepare_lang.sh data/local/dict_rough \
-                "[x]" data/local/lang_tmp_rough data/lang_rough
-  local/hlvc_faetar_format_data.sh _rough
+
 
   $only && exit 0
 fi

@@ -13,13 +13,7 @@ lang_suffix="$1"
 
 echo "$0 $@"  # Print the command line for logging
 
-# partitions
-# - unlab: wavs
-# - core: wavs w/ eaf mappings
-# - core_collapsed: core, but minus segmentation
-# - doc: wavs w/ doc{,x} mappings, no segmentation
-# - rough: wavs w/ eaf + doc{,x} mappings, with no segmentation anywhere
-for x in unlab core core_collapsed doc rough; do
+for x in test train unlab; do
   mkdir -p data/$x
   # rm -rf data/$x/* 
   cp -f data/local/data/wav_$x.scp data/$x/wav.scp
@@ -35,7 +29,7 @@ for x in unlab core core_collapsed doc rough; do
     utils/validate_data_dir.sh data/$x --no-feats --no-text
   else
     cp -f data/local/data/text_$x data/$x/text
-    utils/validate_data_dir.sh data/$x --no-feats
+    utils/validate_data_dir.sh data/$x --no-feats --non-print
   fi
 done
 
