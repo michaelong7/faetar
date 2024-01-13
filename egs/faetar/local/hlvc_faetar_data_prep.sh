@@ -28,7 +28,7 @@ function find_files () {
   for x in txt wav; do
     if [ ! -f "${x}list_${suffix}" ]; then
       find "$search_dir" -name "*.$x" |
-      sort |
+      sort -k 1,1 |
       tee "${x}list_${suffix}" |
       tr '\n' '\0' |
       xargs -I{} -0 bash -c 'filename="$(basename "$1" '".$x"')"; echo ""$filename":"$1""' -- {} > "bn2${x}_${suffix}"
@@ -40,12 +40,15 @@ function find_files () {
 function construct_kaldi_files () {
   partition_label="$1"
 
-  join -1 2 -2 1 <(cut -d ' ' -f 1,2 < segments_unlab) <(tr ':' ' ' < "bn2txt_${partition_label}") |
-  tr '\n' '\0' |
-  xargs -I{} -0 bash -c 'read -ra v <<< "$1"; text="$(cat ${v[2]})" ; printf "%s %s\n" "${v[1]}" "$text"' -- {} > "text_${partition_label}"
+  if [ ! -f "text_${partition_label}" ]; then
+    join -1 2 -2 1 <(cut -d ' ' -f 1,2 < segments_unlab) <(tr ':' ' ' < "bn2txt_${partition_label}") |
+    tr '\n' '\0' |
+    xargs -I{} -0 bash -c 'read -ra v <<< "$1"; text="$(cat ${v[2]})" ; printf "%s %s\n" "${v[1]}" "$text"' -- {} |
+    sort -k 1,1 > "text_${partition_label}"
+  fi
   cut -d ' ' -f 1 "text_${partition_label}" > "${partition_label}.uttlist"
-  join utt2spk_unlab "${partition_label}.uttlist" > "utt2spk_${partition_label}"
-  join "${partition_label}.uttlist" segments_unlab > "segments_${partition_label}"
+  awk 'BEGIN {FS = "-"} {print $0, $1}' "${partition_label}.uttlist" > "utt2spk_${partition_label}"
+  join "${partition_label}.uttlist" <(sort -k 1,1 segments_unlab) > "segments_${partition_label}"
   cut -d ' ' -f 2 "segments_${partition_label}" | sort -u > "${partition_label}.recolist"
   join "${partition_label}.recolist" wav_unlab.scp > "wav_${partition_label}.scp"
   join "${partition_label}.recolist" reco2dur_unlab > "reco2dur_${partition_label}"
@@ -84,17 +87,21 @@ if [ ! -f "reco2dur_unlab" ]; then
 fi
 
 # if an utterance is less than 10 ms, it causes problems with feature generation, so all <10 ms utts are deleted here
-awk '$2 > 0.1' reco2dur_unlab > reco2dur_unlab_temp
+awk '$2 > 0.1' reco2dur_unlab | sort -k 1,1 > reco2dur_unlab_temp
 mv reco2dur_unlab{_temp,}
 
 # these mappings will be used to build collapsed partitions as well as a global 
 # unlabelled partition (unlab)
+# the utterance label is rearranged here to make the speaker label its prefix in order to avoid problems
+# with validate_data_dir.sh
+if [ ! -f "segments_unlab" ]; then
 cat reco2dur_unlab | \
-  xargs -I{} bash -c 'read -ra v <<< "$1"; speaker=$(cut -d "_" -f 2 <<< "${v[0]}") ms=$(echo "${v[1]} * 100" | bc -l); printf "%s-%s-0000000-%06.0f %s 0.00 %.2f\n" "${v[0]}" "$speaker" "$ms" "${v[0]}" "${v[1]}"' -- {} \
-  > segments_unlab
+  xargs -I{} bash -c 'read -ra v <<< "$1"; speaker=$(cut -d "_" -f 2 <<< "${v[0]}"); ms=$(echo "${v[1]} * 100" | bc -l); printf "%s-%s-0000000-%06.0f %s 0.00 %.2f\n" "$speaker" "${v[0]}" "$ms" "${v[0]}" "${v[1]}"' -- {} |
+  sort -k 2,2  > segments_unlab
+fi
 cut -d ' ' -f 1 segments_unlab > unlab.uttlist
 cut -d ' ' -f 1 reco2dur_unlab > unlab.recolist
-paste -d ' ' unlab.uttlist <(cut -d '-' -f 1,2 unlab.uttlist) > utt2spk_unlab
+paste -d ' ' unlab.uttlist <(cut -d '-' -f 1 unlab.uttlist) > utt2spk_unlab
 
 construct_kaldi_files "train"
 construct_kaldi_files "test"
