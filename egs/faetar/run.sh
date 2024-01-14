@@ -81,8 +81,6 @@ if [ $stage -le 2 ]; then
   fi
   local/get_ctms.sh --frame-shift $frame_shift \
     data/train data/lang_train exp/mono0
-  local/ali_to_praat.sh --frame-shift $frame_shift \
-    --copy-wav $copy_wav exp/mono0 data/train
 
   $only && exit 0
 fi
@@ -96,8 +94,6 @@ if [ $stage -le 3 ]; then
 
   local/get_ctms.sh --frame-shift $frame_shift \
     data/train data/lang_train exp/tri1
-  local/ali_to_praat.sh --frame-shift $frame_shift \
-    --copy-wav $copy_wav exp/tri1 data/train
 
   $only && exit 0
 fi
@@ -112,8 +108,6 @@ if [ $stage -le 4 ]; then
 
   local/get_ctms.sh --frame-shift $frame_shift \
     data/train data/lang_train exp/tri2
-  local/ali_to_praat.sh --frame-shift $frame_shift \
-    --copy-wav $copy_wav exp/tri2 data/train
 
   $only && exit 0
 fi
