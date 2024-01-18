@@ -86,8 +86,8 @@ if [ ! -f "reco2dur_unlab" ]; then
   wav-to-duration "scp,s,o:wav_unlab.scp" "ark,t:reco2dur_unlab"
 fi
 
-# if an utterance is less than 10 ms, it causes problems with feature generation, so all <10 ms utts are deleted here
-awk '$2 > 0.1' reco2dur_unlab | sort -k 1,1 > reco2dur_unlab_temp
+# if an utterance is less than 500 ms, it causes problems with feature generation, so all <10 ms utts are deleted here
+awk '$2 >= 0.5' reco2dur_unlab | sort -k 1,1 > reco2dur_unlab_temp
 mv reco2dur_unlab{_temp,}
 
 # these mappings will be used to build collapsed partitions as well as a global 
