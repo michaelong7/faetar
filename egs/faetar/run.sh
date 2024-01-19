@@ -58,6 +58,8 @@ if [ $stage -le 0 ]; then
   $only && exit 0
 fi
 
+exit 30
+
 # construct mfccs
 if [ $stage -le 1 ]; then
 

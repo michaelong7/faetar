@@ -35,7 +35,7 @@ cat "$dir/lexicon_nosil.txt" | \
   sort -u | \
   sed '/^ *$/d' > "$dir/nonsilence_phones.txt"
 
-cat <(echo $'[fp] SPN\n[n] NSN\n[sil] SIL\n[x] SPN') "$dir/lexicon_nosil.txt" \
+cat <(echo $'[fp] SPN\n[x] SPN') "$dir/lexicon_nosil.txt" \
   > "$dir/lexicon.txt"
 
 # "silent" phones. Optional silence is the actual silence

@@ -61,3 +61,8 @@ cd "$dir"
 
 construct_kaldi_files "$test_dir" "test"
 construct_kaldi_files "$train_dir" "train"
+
+# build LM
+cut -d ' ' -f 2- text_train | \
+ "$local/ngram_lm.py" -o 1 --word-delim-expr " " | \
+ gzip -c > "lm.tri-noprune.gz"
