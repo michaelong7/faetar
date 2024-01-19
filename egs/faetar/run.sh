@@ -49,7 +49,7 @@ if [ $stage -le 0 ]; then
     exit 1
   fi
 
-  local/hlvc_faetar_data_prep.sh "$test_dir" "$train_dir"
+  local/faetar_data_prep.sh "$test_dir" "$train_dir"
   local/hlvc_faetar_prepare_dict.sh _train
   utils/prepare_lang.sh data/local/dict_train \
                 "[x]" data/local/lang_tmp_train data/lang_train

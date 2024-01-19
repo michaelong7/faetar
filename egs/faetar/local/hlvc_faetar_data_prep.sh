@@ -79,6 +79,7 @@ tr '\n' '\0' < wavlist |
 
 # now we can use Kaldi's table format
 cat bn2wav | cut -d ':' -f 1 |
+  # turn wav.scp itno basename + path
   awk -v d="$(cd links; pwd -P)" '{print $1, "sox "d"/"$1".wav -t wav -b 16 - rate 16k remix 1 |"}' > wav_unlab.scp
 
 # get those durations (lots of warnings - don't worry about those)
@@ -86,7 +87,7 @@ if [ ! -f "reco2dur_unlab" ]; then
   wav-to-duration "scp,s,o:wav_unlab.scp" "ark,t:reco2dur_unlab"
 fi
 
-# if an utterance is less than 500 ms, it causes problems with feature generation, so all <10 ms utts are deleted here
+# if an utterance is less than 500 ms, it causes problems with feature generation, so all <500 ms utts are deleted here
 awk '$2 >= 0.5' reco2dur_unlab | sort -k 1,1 > reco2dur_unlab_temp
 mv reco2dur_unlab{_temp,}
 
