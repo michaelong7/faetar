@@ -44,7 +44,7 @@ function construct_kaldi_files () {
     textfile="${path%%.wav}.txt"
     text="$(< "$textfile")"
 
-    printf "%s-0000000-%06.0f %s\n" "$name" "$(bc -l <<< "$dur * 100")" "$text"
+    printf "%s-000000-%06.0f %s\n" "$name" "$(bc -l <<< "$dur * 100")" "$text"
   done < "wav_${suffix}.scp" > "text_${suffix}"
 
   # make utt2spk files
