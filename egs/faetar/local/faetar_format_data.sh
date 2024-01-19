@@ -26,7 +26,6 @@ for x in test train; do
   utils/validate_data_dir.sh data/$x --no-feats --non-print
 done
 
-# I don't think we actually need this, but to keep things in order...
 for lm_type in tri-noprune; do
   test=data/lang${lang_suffix}_test_${lm_type}
   mkdir -p $test

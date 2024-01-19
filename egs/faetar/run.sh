@@ -8,8 +8,6 @@ feat_jobs=4
 train_jobs=4
 decode_jobs=8
 only=false
-copy_wav=false
-graph_opts="--min-lm-state-count 1 --discounting-constant 0.15"
 help_message="Train model on cleaned and split HLVC Faetar subset
 
 $usage
@@ -40,6 +38,7 @@ fi
 
 set -e
 
+# prepare data
 if [ $stage -le 0 ]; then
   if [ -z "$test_dir" ]; then
     echo "--test-dir unspecified!"
@@ -58,58 +57,74 @@ if [ $stage -le 0 ]; then
   $only && exit 0
 fi
 
-exit 30
-
 # construct mfccs
 if [ $stage -le 1 ]; then
-
   for x in train test; do
     steps/make_mfcc.sh --cmd "$feat_cmd" --nj "$feat_jobs" data/$x
     steps/compute_cmvn_stats.sh data/$x
-    steps/compute_vad_decision.sh data/$x
     utils/validate_data_dir.sh --non-print data/$x
   done
   
   $only && exit 0
 fi
 
-frame_shift=$(cat data/train/frame_shift)
-
 # make speaker-independent monophone model off train partition
 if [ $stage -le 2 ]; then
-  if [ ! -f "exp/mono0/40.mdl" ]; then
+  if [ ! -f "exp/mono0/final.mdl" ]; then
     steps/train_mono.sh --cmd "$train_cmd" --nj "$train_jobs" \
       data/train data/lang_train exp/mono0
   fi
-  local/get_ctms.sh --frame-shift $frame_shift \
-    data/train data/lang_train exp/mono0
+
+  utils/mkgraph.sh data/lang_train_test_tri-noprune exp/mono0 exp/mono0/graph
+
+  if [ ! -f "exp/mono0/decode_test/scoring_kaldi/best_cer" ]; then
+    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" \
+      exp/mono0/graph data/test exp/mono0/decode_test
+  fi
+  
+  steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
+    data/train data/lang_train exp/mono0 exp/mono0_ali
 
   $only && exit 0
 fi
 
 # make speaker-independent triphone model off train partition
 if [ $stage -le 3 ]; then
-  if [ ! -f "exp/tri1/35.mdl" ]; then
+  if [ ! -f "exp/tri1/final.mdl" ]; then
     steps/train_deltas.sh --cmd "$train_cmd" 2000 10000 \
-      data/train data/lang_train exp/mono0 exp/tri1
+      data/train data/lang_train exp/mono0_ali exp/tri1
   fi
 
-  local/get_ctms.sh --frame-shift $frame_shift \
-    data/train data/lang_train exp/tri1
+  utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri1 exp/tri1/graph
+
+  if [ ! -f "exp/tri1/decode_test/scoring_kaldi/best_cer" ]; then
+    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" \
+      exp/tri1/graph data/test exp/tri1/decode_test
+  fi
+  
+  steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
+    data/train data/lang_train exp/tri1 exp/tri1_ali
 
   $only && exit 0
 fi
 
 # same, but with MLLT
 if [ $stage -le 4 ]; then
-  if [ ! -f "exp/tri2/35.mdl" ]; then
+  if [ ! -f "exp/tri2/final.mdl" ]; then
     steps/train_lda_mllt.sh --cmd "$train_cmd" \
       --splice-opts "--left-context=3 --right-context=3" 2500 15000 \
-      data/train data/lang_train exp/tri1 exp/tri2
+      data/train data/lang_train exp/tri1_ali exp/tri2
   fi
 
-  local/get_ctms.sh --frame-shift $frame_shift \
-    data/train data/lang_train exp/tri2
+  utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri2 exp/tri2/graph
+
+  if [ ! -f "exp/tri2/decode_test/scoring_kaldi/best_cer" ]; then
+    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" \
+      exp/tri2/graph data/test exp/tri2/decode_test
+  fi
+  
+  steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
+    data/train data/lang_train exp/tri2 exp/tri2_ali
 
   $only && exit 0
 fi
