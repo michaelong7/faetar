@@ -18,6 +18,7 @@ for x in test train; do
   # rm -rf data/$x/* 
   cp -f data/local/data/wav_$x.scp data/$x/wav.scp
   cp -f data/local/data/utt2spk_$x data/$x/utt2spk
+  cp -f data/local/data/segments_$x data/$x/segments
 
   utils/utt2spk_to_spk2utt.pl < data/$x/utt2spk > data/$x/spk2utt
 
