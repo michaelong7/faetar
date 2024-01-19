@@ -24,28 +24,24 @@ function construct_kaldi_files () {
   search_dir="$1"
   suffix="$2"
 
-  # make wav.scp files
+  # make wav.scp files + text files
   # only utterances with durations longer or equal to than 500 ms are retained
-  find "$search_dir" -name "*.wav" |
-  sort |
-  tr '\n' '\0' |
-  xargs -I{} -0 bash -c '
-    filename="$(basename "$1" '".wav"')"
-    dur="$(soxi -D "$1")"
-    if (( $(bc -l <<< "$dur >= 0.5") )); then
-      echo -e ""$filename" "$1""
-    fi' -- {} > "wav_${suffix}.scp"
 
-  # make text files
-  while read -r line; do
-    name="$(cut -d ' ' -f 1 <<< "$line")"
-    path="$(cut -d ' ' -f 2 <<< "$line")"
+  # clears "wav_${suffix}.scp" + "text_${suffix}" if they already exist / makes them if they don't
+  :> "wav_${suffix}.scp"
+  :> "text_${suffix}"
+
+  while read -r path; do
+    name="$(basename "$path" .wav)"
     dur="$(soxi -D "$path")"
     textfile="${path%%.wav}.txt"
     text="$(< "$textfile")"
 
-    printf "%s-000000-%06.0f %s\n" "$name" "$(bc -l <<< "$dur * 100")" "$text"
-  done < "wav_${suffix}.scp" > "text_${suffix}"
+    if (( $(bc -l <<< "$dur >= 0.5") )); then
+      echo ""$name" "$path"" >> "wav_${suffix}.scp"
+      printf "%s-000000-%06.0f %s\n" "$name" "$(bc -l <<< "$dur * 100")" "$text" >> "text_${suffix}"
+    fi
+  done <<< "$(find "$search_dir" -name "*.wav" | sort)"
 
   # make utt2spk files
   awk 'BEGIN {FS = "_"} {print $0, $1}' <<< "$(cut -d ' ' -f 1 < "text_${suffix}")" > "utt2spk_${suffix}"
