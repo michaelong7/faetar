@@ -60,8 +60,5 @@ s/\N{U+02D0}/:/g;  # ː
 # delete spaces at the beginning of the phone string
 s/^ *//;
 
-# aspirant
-s/\N{U+02B0}/_h/g;  # 
-
 die "Found non-ascii character in pron: '$_'. Convert in word_to_phoneme.pl!"
   unless /^[[:ascii:]]+$/;

@@ -50,10 +50,10 @@ if [ $stage -le 0 ]; then
   fi
 
   local/faetar_data_prep.sh "$test_dir" "$train_dir"
-  local/hlvc_faetar_prepare_dict.sh _train
+  local/faetar_prepare_dict.sh _train
   utils/prepare_lang.sh data/local/dict_train \
                 "[x]" data/local/lang_tmp_train data/lang_train
-  local/hlvc_faetar_format_data.sh _train
+  local/faetar_format_data.sh _train
 
   $only && exit 0
 fi
