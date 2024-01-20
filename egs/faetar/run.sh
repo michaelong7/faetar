@@ -79,7 +79,7 @@ if [ $stage -le 2 ]; then
   utils/mkgraph.sh data/lang_train_test_tri-noprune exp/mono0 exp/mono0/graph
 
   if [ ! -f "exp/mono0/decode_test/scoring_kaldi/best_cer" ]; then
-    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" \
+    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" \
       exp/mono0/graph data/test exp/mono0/decode_test
   fi
   
