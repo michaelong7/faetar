@@ -8,6 +8,7 @@ feat_jobs=4
 train_jobs=4
 decode_jobs=8
 only=false
+scoring_opts="--min-lmwt 1 --max-lmwt 20"
 help_message="Train model on cleaned and split HLVC Faetar subset
 
 $usage
@@ -98,7 +99,7 @@ if [ $stage -le 3 ]; then
   utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri1 exp/tri1/graph
 
   if [ ! -f "exp/tri1/decode_test/scoring_kaldi/best_cer" ]; then
-    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" \
+    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" \
       exp/tri1/graph data/test exp/tri1/decode_test
   fi
   
@@ -119,7 +120,7 @@ if [ $stage -le 4 ]; then
   utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri2 exp/tri2/graph
 
   if [ ! -f "exp/tri2/decode_test/scoring_kaldi/best_cer" ]; then
-    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" \
+    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" \
       exp/tri2/graph data/test exp/tri2/decode_test
   fi
   
@@ -139,7 +140,7 @@ if [ $stage -le 5 ]; then
   utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri3 exp/tri3/graph
 
   if [ ! -f "exp/tri3/decode_test/scoring_kaldi/best_cer" ]; then
-    steps/decode_fmllr.sh --nj "$decode_jobs" --cmd "$decode_cmd" \
+    steps/decode_fmllr.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" \
       exp/tri3/graph data/test exp/tri3/decode_test
   fi
   
