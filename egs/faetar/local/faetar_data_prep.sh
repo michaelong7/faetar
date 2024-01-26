@@ -93,5 +93,5 @@ split_text text_train
 
 # build LM
 cut -d ' ' -f 2- text_train |
- "$local/ngram_lm.py" -o 1 --word-delim-expr " " |
+ "$local/ngram_lm.py" -o 3 --word-delim-expr " " |
  gzip -c > "lm.tri-noprune.gz"
