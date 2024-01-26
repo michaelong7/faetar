@@ -25,7 +25,7 @@ function construct_kaldi_files () {
   suffix="$2"
 
   # make wav.scp files + text + segments files
-  # only utterances with durations longer or equal to than 500 ms are retained
+  # only utterances with durations longer or equal to 500 ms are retained
 
   # clears files if they already exist / makes them if they don't
   :> "wav_${suffix}.scp"

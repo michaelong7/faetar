@@ -69,86 +69,130 @@ if [ $stage -le 1 ]; then
   $only && exit 0
 fi
 
-# make speaker-independent monophone model off train partition
-if [ $stage -le 2 ]; then
-  if [ ! -f "exp/mono0/final.mdl" ]; then
+for i in {3..3}; do
+  acwt=$(bc -l <<< 1/$i)
+
+  # make speaker-independent monophone model off train partition
+  if [ $stage -le 2 ]; then
     steps/train_mono.sh --cmd "$train_cmd" --nj "$train_jobs" \
-      data/train data/lang_train exp/mono0
+      data/train data/lang_train exp/mono0_$i
+
+    utils/mkgraph.sh data/lang_train_test_tri-noprune exp/mono0_$i exp/mono0_$i/graph
+
+    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt $acwt \
+      exp/mono0_$i/graph data/test exp/mono0_$i/decode_test
+
+    steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
+      data/train data/lang_train exp/mono0_$i exp/mono0_${i}_ali
+
+    old_best_cer="$(awk '{print $2}' exp/mono0/decode_test/scoring_kaldi/best_cer)"
+    new_best_cer="$(awk '{print $2}' "exp/mono0_$i/decode_test/scoring_kaldi/best_cer")"
+
+    if (( $(bc -l <<< "$new_best_cer < $old_best_cer") )); then
+      rm -rf exp/mono0
+      rm -rf exp/mono0_ali
+      mv -fT exp/mono0_$i exp/mono0
+      mv -fT exp/mono0_${i}_ali exp/mono0_ali
+    else
+      rm -rf exp/mono0_$i
+      rm -rf exp/mono0_${i}_ali
+      continue
+    fi
+
+    $only && exit 0
   fi
 
-  utils/mkgraph.sh data/lang_train_test_tri-noprune exp/mono0 exp/mono0/graph
+  # make speaker-independent triphone model off train partition
+  if [ $stage -le 3 ]; then
+    steps/train_deltas.sh --cmd "$train_cmd" 200 1000 \
+      data/train data/lang_train exp/mono0_ali exp/tri1_$i
 
-  if [ ! -f "exp/mono0/decode_test/scoring_kaldi/best_cer" ]; then
-    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" \
-      exp/mono0/graph data/test exp/mono0/decode_test
+    utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri1_$i exp/tri1_$i/graph
+
+    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt $acwt \
+      exp/tri1_$i/graph data/test exp/tri1_$i/decode_test
+    
+    steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
+      data/train data/lang_train exp/tri1_$i exp/tri1_${i}_ali
+
+    old_best_cer="$(awk '{print $2}' exp/tri1/decode_test/scoring_kaldi/best_cer)"
+    new_best_cer="$(awk '{print $2}' "exp/tri1_$i/decode_test/scoring_kaldi/best_cer")"
+
+    if (( $(bc -l <<< "$new_best_cer < $old_best_cer") )); then
+      rm -rf exp/tri1
+      rm -rf exp/tri1_ali
+      mv -fT exp/tri1_$i exp/tri1
+      mv -fT exp/tri1_${i}_ali exp/tri1_ali
+    else
+      rm -rf exp/tri1_$i
+      rm -rf exp/tri1_${i}_ali
+      continue
+    fi
+
+    $only && exit 0
   fi
-  
-  steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
-    data/train data/lang_train exp/mono0 exp/mono0_ali
 
-  $only && exit 0
-fi
-
-# make speaker-independent triphone model off train partition
-if [ $stage -le 3 ]; then
-  if [ ! -f "exp/tri1/final.mdl" ]; then
-    steps/train_deltas.sh --cmd "$train_cmd" 2000 10000 \
-      data/train data/lang_train exp/mono0_ali exp/tri1
-  fi
-
-  utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri1 exp/tri1/graph
-
-  if [ ! -f "exp/tri1/decode_test/scoring_kaldi/best_cer" ]; then
-    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" \
-      exp/tri1/graph data/test exp/tri1/decode_test
-  fi
-  
-  steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
-    data/train data/lang_train exp/tri1 exp/tri1_ali
-
-  $only && exit 0
-fi
-
-# same, but with MLLT
-if [ $stage -le 4 ]; then
-  if [ ! -f "exp/tri2/final.mdl" ]; then
+  # same, but with MLLT
+  if [ $stage -le 4 ]; then
     steps/train_lda_mllt.sh --cmd "$train_cmd" \
-      --splice-opts "--left-context=3 --right-context=3" 2500 15000 \
-      data/train data/lang_train exp/tri1_ali exp/tri2
+      --splice-opts "--left-context=3 --right-context=3" 250 1500 \
+      data/train data/lang_train exp/tri1_ali exp/tri2_$i
+
+    utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri2_$i exp/tri2_$i/graph
+
+    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt $acwt \
+      exp/tri2_$i/graph data/test exp/tri2_$i/decode_test
+    
+    steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd"  --use-graphs true \
+      data/train data/lang_train exp/tri2_$i exp/tri2_${i}_ali
+
+    old_best_cer="$(awk '{print $2}' exp/tri2/decode_test/scoring_kaldi/best_cer)"
+    new_best_cer="$(awk '{print $2}' exp/tri2_$i/decode_test/scoring_kaldi/best_cer)"
+
+    if (( $(bc -l <<< "$new_best_cer < $old_best_cer") )); then
+      rm -rf exp/tri2
+      rm -rf exp/tri2_ali
+      mv -fT exp/tri2_$i exp/tri2
+      mv -fT exp/tri2_${i}_ali exp/tri2_ali
+    else
+      rm -rf exp/tri2_$i
+      rm -rf exp/tri2_${i}_ali
+      continue
+    fi
+
+    $only && exit 0
   fi
 
-  utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri2 exp/tri2/graph
+  # make speaker-adaptive triphone model from train partition
+  if [ $stage -le 5 ]; then
+    steps/train_sat.sh --cmd "$train_cmd" 420 4000 \
+      data/train data/lang_train exp/tri2_ali exp/tri3_$i
 
-  if [ ! -f "exp/tri2/decode_test/scoring_kaldi/best_cer" ]; then
-    steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" \
-      exp/tri2/graph data/test exp/tri2/decode_test
+    utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri3_$i exp/tri3_$i/graph
+
+    steps/decode_fmllr.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt $acwt \
+      exp/tri3_$i/graph data/test exp/tri3_$i/decode_test
+    
+    steps/align_fmllr.sh --nj "$train_jobs" --cmd "$train_cmd" \
+      data/train data/lang_train exp/tri3_$i exp/tri3_${i}_ali
+
+    old_best_cer="$(awk '{print $2}' exp/tri3/decode_test/scoring_kaldi/best_cer)"
+    new_best_cer="$(awk '{print $2}' "exp/tri3_$i/decode_test/scoring_kaldi/best_cer")"
+
+    if (( $(bc -l <<< "$new_best_cer < $old_best_cer") )); then
+      rm -rf exp/tri3
+      rm -rf exp/tri3_ali
+      mv -fT exp/tri3_$i exp/tri3
+      mv -fT exp/tri3_${i}_ali exp/tri3_ali
+    else
+      rm -rf exp/tri3_$i
+      rm -rf exp/tri3_${i}_ali
+      continue
+    fi
+
+    $only && exit 0
   fi
-  
-  steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd"  --use-graphs true \
-    data/train data/lang_train exp/tri2 exp/tri2_ali
-
-  $only && exit 0
-fi
-
-# make speaker-adaptive triphone model from train partition
-if [ $stage -le 5 ]; then
-  if [ ! -f "exp/tri3/final.mdl" ]; then
-    steps/train_sat.sh --cmd "$train_cmd" 4200 40000 \
-      data/train data/lang_train exp/tri2_ali exp/tri3
-  fi
-
-  utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri3 exp/tri3/graph
-
-  if [ ! -f "exp/tri3/decode_test/scoring_kaldi/best_cer" ]; then
-    steps/decode_fmllr.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" \
-      exp/tri3/graph data/test exp/tri3/decode_test
-  fi
-  
-  steps/align_fmllr.sh --nj "$train_jobs" --cmd "$train_cmd" \
-    data/train data/lang_train exp/tri3 exp/tri3_ali
-
-  $only && exit 0
-fi
+done
 
 # # clean up segmentations using SAT model
 # if [ $stage -le 6 ]; then
