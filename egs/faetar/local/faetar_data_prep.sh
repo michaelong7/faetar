@@ -60,15 +60,17 @@ function split_text () {
   awk \
   'BEGIN {
     FS = " ";
-    OFS = " "
+    OFS = " ";
+    text = ""
   }
 
   {
     for (i = 2; i <= NF; i++) {
-      text = $i;
-      gsub(/d[zʒ]ː|tʃː|d[zʒ]|tʃ|\Sː|\S/, "& ", text)
-      print $1, text
+      text += $i;
     }
+
+    gsub(/d[zʒ]ː|tʃː|d[zʒ]|tʃ|\Sː|\S/, "& ", text);
+    print $1, text
   }' "$text_file" > "$text_file"_
   mv "$text_file"{_,}
 }
