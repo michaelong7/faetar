@@ -7,9 +7,6 @@ use utf8;
 # spoken noise
 s/\[x\]/ SPN/g;
 
-# h is silent
-s/h//g;
-
 # start with the 2-character phones
 s/(?<! )t\N{U+0283}/ tS/g;  # tʃ
 s/(?<! )d\N{U+0292}/ dZ/g;  # dʒ
