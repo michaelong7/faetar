@@ -142,8 +142,15 @@ if [ $stage -le 6 ]; then
       if (( $(bc -l <<< "$new_best_cer < $old_best_cer") )); then
         rm -rf exp/$x/decode_test
         mv -fT exp/$x/decode_test_$i exp/$x/decode_test
+        if [ "$x" == "tri3" ]; then
+          rm -rf exp/$x/decode_test.si
+          mv -fT exp/$x/decode_test_$i.si exp/$x/decode_test.si
+        fi
       else
         rm -rf exp/$x/decode_test_$i
+        if [ "$x" == "tri3" ]; then
+          rm -rf exp/$x/decode_test_$i.si
+        fi
       fi
     done
   done
