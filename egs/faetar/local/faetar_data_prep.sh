@@ -66,11 +66,12 @@ function split_text () {
 
   {
     for (i = 2; i <= NF; i++) {
-      text += $i;
+      text = text $i;
     }
 
-    gsub(/d[zʒ]ː|tʃː|d[zʒ]|tʃ|\Sː|\S/, "& ", text);
-    print $1, text
+    gsub(/\[fp\]|d[zʒ]ː|tʃː|d[zʒ]|tʃ|\Sː|\S/, "& ", text);
+    print $1, text;
+    text = ""
   }' "$text_file" > "$text_file"_
   mv "$text_file"{_,}
 }
