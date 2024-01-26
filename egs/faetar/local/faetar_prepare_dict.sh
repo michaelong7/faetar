@@ -35,17 +35,17 @@ cat "$dir/lexicon_nosil.txt" | \
   sort -u | \
   sed '/^ *$/d' > "$dir/nonsilence_phones.txt"
 
-cat <(echo $'[fp] SPN\n[n] NSN\n[sil] SIL\n[x] SPN') "$dir/lexicon_nosil.txt" \
+cat <(echo $'[fp] SPN\n[sil] SIL\n[x] SPN') "$dir/lexicon_nosil.txt" \
   > "$dir/lexicon.txt"
 
 # "silent" phones. Optional silence is the actual silence
-echo $'SIL\nSPN\nNSN' > $dir/silence_phones.txt
+echo $'SIL\nSPN' > $dir/silence_phones.txt
 echo SIL > $dir/optional_silence.txt
 
 # in addition to asking questions about the type of "silence", we'll also ask
 # questions of any modifiers (i.e. aspirants _h or geminates :)
 cat "$dir/nonsilence_phones.txt" | perl -CS -e '
-print "SIL SPN NSN\n";
+print "SIL SPN\n";
 my ($last_ph, $last_qn, $count) = ("", "", 0);
 while (my $line = <STDIN>) {
   chomp($line);
