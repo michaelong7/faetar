@@ -53,6 +53,26 @@ function construct_kaldi_files () {
 
 }
 
+# splits text into individual phones
+function split_text () {
+  text_file="$1"
+
+  awk \
+  'BEGIN {
+    FS = " ";
+    OFS = " "
+  }
+
+  {
+    for (i = 2; i <= NF; i++) {
+      text = $i;
+      gsub(/d[zʒ]ː|tʃː|d[zʒ]|tʃ|\Sː|\S/, "& ", text)
+      print $1, text
+    }
+  }' "$text_file" > "$text_file"_
+  mv "$text_file"{_,}
+}
+
 test_dir="$1"
 train_dir="$2"
 dir="$(pwd -P)/data/local/data"
@@ -64,6 +84,9 @@ cd "$dir"
 
 construct_kaldi_files "$test_dir" "test"
 construct_kaldi_files "$train_dir" "train"
+
+split_text text_test
+split_text text_train
 
 # build LM
 cut -d ' ' -f 2- text_train |
