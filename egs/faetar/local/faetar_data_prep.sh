@@ -65,7 +65,9 @@ function split_text () {
   }
 
   {
-    for (i = 2; i <= NF; i++) {
+    text = $2;
+
+    for (i = 3; i <= NF; i++) {
       text = text "[sil]" $i;
     }
 

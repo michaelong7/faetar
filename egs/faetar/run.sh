@@ -8,7 +8,8 @@ feat_jobs=4
 train_jobs=4
 decode_jobs=8
 only=false
-scoring_opts="--min-lmwt 1 --max-lmwt 20"
+remake_graphs=false
+scoring_opts="--min-lmwt 1 --max-lmwt 12"
 help_message="Train model on cleaned and split HLVC Faetar subset
 
 $usage
@@ -23,7 +24,7 @@ Options
               (deft: $feat_jobs)
 --train-jobs  Number of jobs to run in parallel when training models
               (deft: $train_jobs)
---decode-jobs Number of jobs to run in paralllel when decoding audio
+--decode-jobs Number of jobs to run in parallel when decoding audio
               (deft: $decode_jobs)
 "
 
@@ -58,48 +59,58 @@ if [ $stage -le 0 ]; then
   $only && exit 0
 fi
 
-# construct mfccs
+ # construct mfccs and make subsets of train 
+ # the subsets contain 10% (shortest lengths), 20% (random), and 40% (random) of the utterances
 if [ $stage -le 1 ]; then
   for x in train test; do
     steps/make_mfcc.sh --cmd "$feat_cmd" --nj "$feat_jobs" data/$x
     steps/compute_cmvn_stats.sh data/$x
     utils/validate_data_dir.sh --non-print data/$x
   done
+
+  train_seg_num="$(wc -l < data/train/segments)"
+
+  utils/subset_data_dir.sh --shortest data/train "$(( $train_seg_num / 10 ))" data/train_10
+  utils/subset_data_dir.sh data/train "$(( $train_seg_num * 2 / 10 ))" data/train_20
+  utils/subset_data_dir.sh data/train "$(( $train_seg_num * 4 / 10 ))" data/train_40
   
   $only && exit 0
 fi
 
-# make speaker-independent monophone model off train partition
+# make speaker-independent monophone model off train_10 partition
+# then align train_20
 if [ $stage -le 2 ]; then
   steps/train_mono.sh --cmd "$train_cmd" --nj "$train_jobs" \
-    data/train data/lang_train exp/mono0
+    data/train_10 data/lang_train exp/mono0
 
   utils/mkgraph.sh data/lang_train_test_tri-noprune exp/mono0 exp/mono0/graph
 
   steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
-    data/train data/lang_train exp/mono0 exp/mono0_ali
+    data/train_20 data/lang_train exp/mono0 exp/mono0_ali
 
   $only && exit 0
 fi
 
-# make speaker-independent triphone model off train partition
+# make speaker-independent triphone model off train_20 partition
+# then align train_40
 if [ $stage -le 3 ]; then
   steps/train_deltas.sh --cmd "$train_cmd" 2000 10000 \
-    data/train data/lang_train exp/mono0_ali exp/tri1
+    data/train_20 data/lang_train exp/mono0_ali exp/tri1
 
   utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri1 exp/tri1/graph
   
   steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
-    data/train data/lang_train exp/tri1 exp/tri1_ali
+    data/train_40 data/lang_train exp/tri1 exp/tri1_ali
 
   $only && exit 0
 fi
 
-# same, but with MLLT
+# make speaker-independent triphone model with MLLT off train_40 partition
+# then align full train partition
 if [ $stage -le 4 ]; then
   steps/train_lda_mllt.sh --cmd "$train_cmd" \
     --splice-opts "--left-context=3 --right-context=3" 2500 15000 \
-    data/train data/lang_train exp/tri1_ali exp/tri2
+    data/train_40 data/lang_train exp/tri1_ali exp/tri2
 
   utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri2 exp/tri2/graph
   
@@ -124,8 +135,30 @@ fi
 
 # testing
 if [ $stage -le 6 ]; then
-  for i in {1..20}; do
+  for x in mono0 tri1 tri2 tri3; do
+        if [ "$x" != "tri3" ]; then
+          steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt "20" \
+            exp/$x/graph data/test exp/$x/decode_test
+        else
+          steps/decode_fmllr.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt "20" \
+            exp/$x/graph data/test exp/$x/decode_test
+        fi
+  done
+
+  $only && exit 0
+fi
+
+# testing
+if [ $stage -le 7 ]; then
+  for i in {1..12}; do
     acwt=$(bc -l <<< 1/$i)
+
+    if $remake_graphs; then
+      utils/mkgraph.sh data/lang_train_test_tri-noprune exp/mono0 exp/mono0/graph
+      utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri1 exp/tri1/graph
+      utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri2 exp/tri2/graph
+      utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri3 exp/tri3/graph
+    fi
 
     for x in mono0 tri1 tri2 tri3; do
       if [ "$x" != "tri3" ]; then
@@ -151,10 +184,10 @@ if [ $stage -le 6 ]; then
         if [ "$x" == "tri3" ]; then
           rm -rf exp/$x/decode_test_$i.si
         fi
+        break
       fi
     done
   done
 
   $only && exit 0
 fi
-
