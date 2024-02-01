@@ -68,10 +68,10 @@ function split_text () {
     text = $2;
 
     for (i = 3; i <= NF; i++) {
-      text = text "[sil]" $i;
+      text = text $i;
     }
 
-    gsub(/\[sil\]|\[fp\]|d[zʒ]ː|tʃː|d[zʒ]|tʃ|\Sː|\S/, "& ", text);
+    gsub(/\[fp\]|d[zʒ]ː|tʃː|d[zʒ]|tʃ|\Sː|\S/, "& ", text);
     print $1, text;
     text = ""
   }' "$text_file" > "$text_file"_
@@ -95,5 +95,5 @@ split_text text_train
 
 # build LM
 cut -d ' ' -f 2- text_train |
- "$local/ngram_lm.py" -o 3 --word-delim-expr " " |
+ "$local/ngram_lm.py" -o 2 --word-delim-expr " " |
  gzip -c > "lm.tri-noprune.gz"
