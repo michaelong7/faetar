@@ -92,3 +92,4 @@ venv/
 /build*
 egs/faetar/data/*
 egs/faetar/exp/*
+egs/faetar/test_stuff/
