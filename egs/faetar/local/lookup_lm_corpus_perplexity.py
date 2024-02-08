@@ -20,11 +20,11 @@ import os
 import logging
 import gzip
 import io
-import itertools
+import re
+import math
 
-from typing import Optional, Mapping, List, Union
+from typing import Dict, Optional, Mapping, List, Union, TextIO, Tuple, Type, TypeVar
 
-# import torch
 import numpy as np
 import ngram_lm
 
@@ -111,6 +111,162 @@ class CorpusDataset:
                 ft = io.TextIOWrapper(fb)
             yield from (self.process_line(line) for line in ft)
 
+K = TypeVar("K", bound=Union[str, int, np.signedinteger])
+F = TypeVar("F", bound=Union[float, np.floating])
+
+def parse_arpa_lm(
+    file_: Union[TextIO, str],
+    token2id: Optional[Dict[str, np.signedinteger]] = None,
+    to_base_e: bool = None,
+    ftype: Type[F] = float,
+    logger: Optional[logging.Logger] = None,
+) -> List[Dict[Union[K, Tuple[K, ...]], F]]:
+    r"""Parse an ARPA statistical language model
+
+    An `ARPA language model <https://cmusphinx.github.io/wiki/arpaformat/>`__
+    is an n-gram model with back-off probabilities. It is formatted as::
+
+        \data\
+        ngram 1=<count>
+        ngram 2=<count>
+        ...
+        ngram <N>=<count>
+
+        \1-grams:
+        <logp> <token[t]> <logb>
+        <logp> <token[t]> <logb>
+        ...
+
+        \2-grams:
+        <logp> <token[t-1]> <token[t]> <logb>
+        ...
+
+        \<N>-grams:
+        <logp> <token[t-<N>+1]> ... <token[t]>
+        ...
+
+        \end\
+
+    Parameters
+    ----------
+    file_
+        Either the path or a file pointer to the file.
+    token2id
+        A dictionary whose keys are token strings and values are ids. If set, tokens
+        will be replaced with ids on read
+    to_base_e
+        ARPA files store log-probabilities and log-backoffs in base-10. This 
+    ftype
+        The floating-point type to store log-probabilities and backoffs as
+    logger
+        If specified, progress will be written to this logger at INFO level
+
+    Returns
+    -------
+    prob_dicts : list
+        A list of the same length as there are orders of n-grams in the
+        file (e.g. if the file contains up to tri-gram probabilities then
+        `prob_dicts` will be of length 3). Each element is a dictionary whose
+        key is the word sequence (earliest word first). For 1-grams, this is
+        just the word. For n > 1, this is a tuple of words. Values are either
+        a tuple of ``logp, logb`` of the log-probability and backoff
+        log-probability, or, in the case of the highest-order n-grams that
+        don't need a backoff, just the log probability.
+    
+    Warnings
+    --------
+    Version ``0.3.0`` and prior do not have the option `to_base_e`, always returning
+    values in log base 10. While this remains the default, it is deprecated and will
+    be removed in a later version.
+
+    This function is not safe for JIT scripting or tracing.
+    """
+    if isinstance(file_, str):
+        with open(file_) as f:
+            return parse_arpa_lm(f, token2id, to_base_e, ftype, logger)
+    if to_base_e is None:
+        logging.warnings.warn(
+            "The default of to_base_e will be changed to True in a later version. "
+            "Please manually specify this argument to suppress this warning"
+        )
+        to_base_e = False
+    norm = math.log10(math.e) if to_base_e else 1.0
+    norm = ftype(norm)
+    if logger is None:
+        print_ = lambda x: None
+    else:
+        print_ = logger.info
+    line = ""
+    print_("finding \\data\\ header")
+    for line in file_:
+        if line.strip() == "\\data\\":
+            break
+    if line.strip() != "\\data\\":
+        raise IOError("Could not find \\data\\ line. Is this an ARPA file?")
+    ngram_counts: List[Dict[int, int]] = []
+    count_pattern = re.compile(r"^ngram\s+(\d+)\s*=\s*(\d+)$")
+    print_("finding n-gram counts")
+    for line in file_:
+        line = line.strip()
+        if not line:
+            continue
+        match = count_pattern.match(line)
+        if match is None:
+            break
+        n, count = (int(x) for x in match.groups())
+        print_(f"there are {count} {n}-grams")
+        if len(ngram_counts) < n:
+            ngram_counts.extend(0 for _ in range(n - len(ngram_counts)))
+        ngram_counts[n - 1] = count
+    prob_dicts: List[Dict[Union[K, Tuple[K, ...]], F]] = [dict() for _ in ngram_counts]
+    ngram_header_pattern = re.compile(r"^\\(\d+)-grams:$")
+    ngram_entry_pattern = re.compile(r"^(-?\d+(?:\.\d+)?(?:[Ee]-?\d+)?)\s+(.*)$")
+    while line != "\\end\\":
+        match = ngram_header_pattern.match(line)
+        if match is None:
+            raise IOError('line "{}" is not valid'.format(line))
+        ngram = int(match.group(1))
+        if ngram > len(ngram_counts):
+            raise IOError(
+                "{}-grams count was not listed, but found entry" "".format(ngram)
+            )
+        dict_ = prob_dicts[ngram - 1]
+        for line in file_:
+            line = line.strip()
+            if not line:
+                continue
+            match = ngram_entry_pattern.match(line)
+            if match is None:
+                break
+            logp, rest = match.groups()
+            tokens = tuple(rest.strip().split())
+            # IRSTLM and SRILM allow for implicit backoffs on non-final
+            # n-grams, but final n-grams must not have backoffs
+            logb = ftype(0.0)
+            if len(tokens) == ngram + 1 and ngram < len(prob_dicts):
+                try:
+                    logb = ftype(tokens[-1])
+                    tokens = tokens[:-1]
+                except ValueError:
+                    pass
+            if len(tokens) != ngram:
+                raise IOError(
+                    'expected line "{}" to be a(n) {}-gram' "".format(line, ngram)
+                )
+            if token2id is not None:
+                tokens = tuple(token2id[tok] for tok in tokens)
+            if ngram == 1:
+                tokens = tokens[0]
+            if ngram != len(ngram_counts):
+                dict_[tokens] = (ftype(logp) / norm, logb / norm)
+            else:
+                dict_[tokens] = ftype(logp) / norm
+    if line != "\\end\\":
+        raise IOError("Could not find \\end\\ line")
+    for ngram_m1, (ngram_count, dict_) in enumerate(zip(ngram_counts, prob_dicts)):
+        if len(dict_) != ngram_count:
+            raise IOError(f"Expected {ngram_count} {ngram_m1}-grams, got {len(dict_)}")
+    return prob_dicts
 
 def main_arpa(options: argparse.Namespace):
     logging.info("Parsing lm...")
