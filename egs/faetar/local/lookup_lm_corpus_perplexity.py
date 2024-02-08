@@ -23,14 +23,27 @@ import io
 import re
 import math
 
-from typing import Dict, Optional, Mapping, List, Union, TextIO, Tuple, Type, TypeVar
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Optional,
+    Mapping,
+    List,
+    Union,
+    TextIO,
+    Tuple,
+    Type,
+    TypeVar,
+)
+from typing_extensions import (
+    overload,
+    Literal,
+    Protocol,
+)
 
 import numpy as np
 import ngram_lm
-
-from src.pydrobert.torch.data import parse_arpa_lm
-from src.pydrobert.torch.argcheck import as_file
-
 
 SOS_DEFTS = ("<s>", "<S>")
 EOS_DEFTS = ("</s>", "</S>")
@@ -77,6 +90,66 @@ While fast and serviceable for small LMs, this pure-Python implementation isn't 
 efficient memory-wise. 
 """
 
+V1 = TypeVar("V1")
+V2 = TypeVar("V2")
+StrOrPathLike = Union[str, os.PathLike]
+
+class _IsCheck(Protocol[V1]):
+    # if allow_none is the literal "False" (also the default), we can narrow to the type
+    # of interest. If allow_none is true or is variable, we have to assume it's optional
+    @overload
+    def __call__(
+        self, val: V1, name: Optional[str] = None, allow_none: Literal[False] = False
+    ) -> V1:
+        ...
+
+    @overload
+    def __call__(
+        self, val: Optional[V1], name: Optional[str] = None, allow_none: bool = False
+    ) -> Optional[V1]:
+        ...
+
+def _nv(name: Optional[str], val: Any) -> str:
+    if isinstance(val, str):
+        val = f"'{val}'"
+    return f"{val}" if name is None else f"{name} ({val})"
+
+def _is_check_allow_none(wrapped: Callable[..., V1]) -> _IsCheck[V1]:
+    def wrapper(val, name=None, allow_none=False):
+        if allow_none and val is None:
+            return val
+        return wrapped(val, name)
+
+    return wrapper
+
+@_is_check_allow_none
+def is_file(val: StrOrPathLike, name: Optional[str] = None) -> StrOrPathLike:
+    if not os.path.isfile(val):
+        raise ValueError(f"{_nv(name, val)} is not a file")
+    return val
+
+def _cast_factory(
+    cast: Callable[[Any], V1],
+    check: Optional[Callable[[V1, Optional[str]], V1]] = None,
+    cast_name: Optional[str] = None,
+):
+    def _cast(val: Any, name: Optional[str] = None) -> V1:
+        try:
+            val = cast(val)
+            if check is not None:
+                val = check(val, name)
+        except:
+            suf = "n" if _cast.__name__.startswith(("a", "e", "i", "o", "u")) else ""
+            raise TypeError(
+                f"Could not cast {_nv(name, val)} as a{suf} {cast.__name__}"
+            )
+        return val
+
+    _cast.__name__ = cast.__name__ if cast_name is None else cast_name
+
+    return _cast
+
+as_file = _cast_factory(str, is_file, cast_name="readable file")
 
 class CorpusDataset:
     filename: str
