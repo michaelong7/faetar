@@ -127,7 +127,7 @@ function mannerize () {
     gsub(/q/, "P ", text);
     gsub(/y|@/, "V ", text);
 
-    print text, $NF;
+    print text;
   }' "$text_file" > "$text_file"_
   mv "$text_file"{_,}
 }
