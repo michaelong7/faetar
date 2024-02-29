@@ -78,6 +78,60 @@ function split_text () {
   mv "$text_file"{_,}
 }
 
+function mannerize () {
+    text_file="$1"
+
+  awk \
+  'BEGIN {
+    FS = " ";
+    OFS = " ";
+    text = ""
+  }
+
+  {
+    text = $2;
+
+    for (i = 3; i <= NF; i++) {
+      text = text $i;
+    }
+
+    # remove length marker
+    gsub(/ː/, "", text);
+
+    # vowels + glides
+    gsub(/a|i|e|o|u|ə|ɛ|ɪ|ɑ|ɔ|ʊ|ʌ|j|w/, "V ", text);
+
+    # filled pauses
+    gsub(/\[fp\]/, "Q ", text);
+
+    # affricates
+    gsub(/d[zʒ]|tʃ/, "PS ", text);
+
+    # nasals
+    gsub(/m|n|ŋ|ɲ/, "N ", text);
+
+    # sibilants
+    gsub(/s|z|ʃ|ʒ/, "S ", text);
+
+    # other fricatives
+    gsub(/ɣ|θ|ð|f|v|h/, "F ", text);
+
+    # stops
+    gsub(/b|d|ɡ|k|p|t/, "P ", text);
+
+    # liquids
+    gsub(/l|ʎ|r/, "L ", text);
+
+    # others
+    gsub(/x/, "PS ", text);
+    gsub(/q/, "P ", text);
+    gsub(/y|@/, "V ", text);
+
+    print text, $NF;
+  }' "$text_file" > "$text_file"_
+  mv "$text_file"{_,}
+}
+
 test_dir="$1"
 train_dir="$2"
 dir="$(pwd -P)/data/local/data"
@@ -93,7 +147,9 @@ construct_kaldi_files "$train_dir" "train"
 split_text text_test
 split_text text_train
 
+mannerize text_train
+
 # build LM
 cut -d ' ' -f 2- text_train |
  "$local/ngram_lm.py" -o 5 --word-delim-expr " " |
- gzip -c > "lm.tri-noprune.gz"
+ gzip -c > "lm.tri-noprune-manner.gz"
