@@ -147,7 +147,7 @@ construct_kaldi_files "$train_dir" "train"
 split_text text_test
 split_text text_train
 
-mannerize text_train
+# mannerize text_train
 
 # build LM
 cut -d ' ' -f 2- text_train |

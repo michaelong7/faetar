@@ -70,9 +70,9 @@ if [ $stage -le 1 ]; then
 
   train_seg_num="$(wc -l < data/train/segments)"
 
-  utils/subset_data_dir.sh --shortest data/train "$(( $train_seg_num / 10 ))" data/train_10
-  utils/subset_data_dir.sh data/train "$(( $train_seg_num * 2 / 10 ))" data/train_20
-  utils/subset_data_dir.sh data/train "$(( $train_seg_num * 4 / 10 ))" data/train_40
+  utils/subset_data_dir.sh --shortest data/train "$(( $train_seg_num * 10 / 10 ))" data/train_10
+  utils/subset_data_dir.sh data/train "$(( $train_seg_num * 10 / 10 ))" data/train_20
+  utils/subset_data_dir.sh data/train "$(( $train_seg_num * 10 / 10 ))" data/train_40
   
   $only && exit 0
 fi
