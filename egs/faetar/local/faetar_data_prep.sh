@@ -105,26 +105,26 @@ function mannerize () {
     gsub(/\[fp\]/, "Q ", text);
 
     # affricates
-    gsub(/d[zʒ]|tʃ/, "PS ", text);
+    gsub(/d[zʒ]|tʃ/, "C C ", text);
 
     # nasals
-    gsub(/m|n|ŋ|ɲ/, "N ", text);
+    gsub(/m|n|ŋ|ɲ/, "C ", text);
 
     # sibilants
-    gsub(/s|z|ʃ|ʒ/, "S ", text);
+    gsub(/s|z|ʃ|ʒ/, "C ", text);
 
     # other fricatives
-    gsub(/ɣ|θ|ð|f|v|h/, "F ", text);
+    gsub(/ɣ|θ|ð|f|v|h/, "C ", text);
 
     # stops
-    gsub(/b|d|ɡ|k|p|t/, "P ", text);
+    gsub(/b|d|ɡ|k|p|t/, "C ", text);
 
     # liquids
-    gsub(/l|ʎ|r/, "L ", text);
+    gsub(/l|ʎ|r/, "C ", text);
 
     # others
-    gsub(/x/, "PS ", text);
-    gsub(/q/, "P ", text);
+    gsub(/x/, "C C ", text);
+    gsub(/q/, "C ", text);
     gsub(/y|@/, "V ", text);
 
     print $1, text;
@@ -151,5 +151,5 @@ split_text text_train
 
 # build LM
 cut -d ' ' -f 2- text_train |
- "$local/ngram_lm.py" -o 5 --word-delim-expr " " |
- gzip -c > "lm.tri-noprune-manner.gz"
+ "$local/ngram_lm.py" -o 5 -t 0 1 --word-delim-expr " " |
+ gzip -c > "lm.tri-noprune-CV.gz"
