@@ -1,0 +1,26 @@
+name: kaldi
+channels:
+  - sdrobert
+  - conda-forge
+  - nodefaults
+dependencies:
+  - antiword
+  - bc
+  - gawk
+  - grep
+  - ipython
+  - kaldi
+  - numpy
+  - openpyxl
+  - perl
+  - pip
+  - python
+  - python-docx
+  - rhash
+  - sed
+  - setuptools
+  - sox
+  - wheel
+  - xlrd
+  - pip:
+    - pympi-ling
