@@ -48,6 +48,9 @@ function construct_kaldi_files () {
     fi
   done <<< "$(find "$search_dir" -name "*.wav" | sort)"
 
+  # make reco2dur files
+  awk 'BEGIN {FS = " "} {print $2, $4}' < "segments_${suffix}" > "reco2dur_${suffix}"
+
   # make utt2spk files
   awk 'BEGIN {FS = "_"} {print $0, $1}' <<< "$(cut -d ' ' -f 1 < "text_${suffix}")" > "utt2spk_${suffix}"
 
@@ -151,5 +154,5 @@ split_text text_train
 
 # build LM
 cut -d ' ' -f 2- text_train |
- "$local/ngram_lm.py" -o 5 -t 0 1 --word-delim-expr " " |
- gzip -c > "lm.tri-noprune-CV.gz"
+ "$local/ngram_lm.py" -o 5 --word-delim-expr " " |
+ gzip -c > "lm.tri-noprune.gz"
