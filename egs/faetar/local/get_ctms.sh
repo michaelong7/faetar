@@ -31,7 +31,7 @@ exp="$3"
 
 set -e
 
-steps/get_train_ctm.sh --frame-shift $frame_shift \
+steps/get_train_ctm.sh --frame-shift $frame_shift --print-silence true \
   "$data" "$lang" "$exp"
 
 if $with_nooverlap; then
@@ -47,9 +47,3 @@ if $with_nooverlap; then
   
   $clean && rm -rf "$tmp"
 fi
-
-for f in "$exp/ctm" "$exp/ctm_nooverlap"; do
-  if [ -f $f ]; then
-    local/count_speech.sh $f $exp
-  fi
-done
