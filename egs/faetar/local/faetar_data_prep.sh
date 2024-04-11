@@ -3,7 +3,7 @@
 . ./path.sh
 
 if [ $# -ne 2 ]; then
-  echo "Usage: $0 test-dir train-dir"
+  echo "Usage: $0 test-dir train-dir dev-dir"
   exit 1
 fi
 
@@ -16,6 +16,11 @@ fi
 
 if [ ! -d "$2" ]; then
   echo "$0: '$2' is not a directory"
+  exit 1
+fi
+
+if [ ! -d "$3" ]; then
+  echo "$0: '$3' is not a directory"
   exit 1
 fi
 
@@ -137,6 +142,7 @@ function mannerize () {
 
 test_dir="$1"
 train_dir="$2"
+dev_dir="$3"
 dir="$(pwd -P)/data/local/data"
 mkdir -p "$dir"
 local="$(pwd -P)/local"
@@ -146,9 +152,11 @@ cd "$dir"
 
 construct_kaldi_files "$test_dir" "test"
 construct_kaldi_files "$train_dir" "train"
+construct_kaldi_files "$train_dir" "dev"
 
 split_text text_test
 split_text text_train
+split_text text_dev
 
 # mannerize text_train
 
