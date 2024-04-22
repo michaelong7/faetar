@@ -13,7 +13,7 @@ lang_suffix="$1"
 
 echo "$0 $@"  # Print the command line for logging
 
-for x in test train; do
+for x in test train dev; do
   mkdir -p data/$x
   # rm -rf data/$x/* 
   cp -f data/local/data/wav_$x.scp data/$x/wav.scp

@@ -3,7 +3,7 @@
 . ./path.sh
 
 if [ $# -ne 2 ]; then
-  echo "Usage: $0 test-dir train-dir dev-dir"
+  echo "Usage: $0 test-dir train-dir"
   exit 1
 fi
 
