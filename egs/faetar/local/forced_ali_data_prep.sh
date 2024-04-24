@@ -60,7 +60,15 @@ function construct_kaldi_files () {
       else
         find "$partition_dir" -name "*$name.txt" -print |
         sort |
-        xargs -I{} bash -c 'name="$(basename "$1" .txt | tr '_' '-' | cut -d - -f 1-3 )"; text="$(< "$1")"; echo -e "$name $text"' -- "{}" |
+        xargs -I{} bash -c '
+          name="$(basename "$1" .txt | tr '_' '-' | cut -d - -f 1-3 )"
+          start="$(cut -d - -f 2 <<< "$name")"
+          end="$(cut -d - -f 3 <<< "$name")"
+          text="$(< "$1")"
+          if (( $(bc -l <<< "$end - $start >= 50") )); then
+            echo -e "$name $text"
+          fi
+        ' -- "{}" |
         tee -a "text_$x" |
         cut -d ' ' -f 1 |
         awk -v name="$name" -v partition="$x" \
@@ -74,7 +82,7 @@ function construct_kaldi_files () {
         echo "$name $dur"  >> "reco2dur_$x"
 
         # make wav.scp files
-        echo "$name $path" >> "wav_$x.scp"
+        echo "$name sox $path -t wav -b 16 - rate 16k remix 1 |" >> "wav_$x.scp"
 
       fi
 
