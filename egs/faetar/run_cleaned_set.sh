@@ -65,9 +65,6 @@ if [ $stage -le 0 ]; then
   utils/prepare_lang.sh data/local/dict_train \
                 "[x]" data/local/lang_tmp_train data/lang_train
   local/faetar_format_data.sh _train
-  for x in train test dev; do
-    utils/fix_data_dir.sh data/$x
-  done
 
   $only && exit 0
 fi
@@ -90,10 +87,8 @@ if [ $stage -le 2 ]; then
 
   utils/mkgraph.sh data/lang_train_test_tri-noprune exp/mono0 exp/mono0/graph
 
-  for y in train test dev; do
-    steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
-      data/$y data/lang_train exp/mono0 exp/mono0_${y}_ali
-  done
+  steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
+    data/train data/lang_train exp/mono0 exp/mono0_ali
 
   $only && exit 0
 fi
@@ -105,10 +100,8 @@ if [ $stage -le 3 ]; then
 
   utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri1 exp/tri1/graph
 
-  for y in train test dev; do
-    steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
-      data/$y data/lang_train exp/tri1 exp/tri1_${y}_ali
-  done
+  steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" \
+    data/train data/lang_train exp/tri1 exp/tri1_ali
 
   $only && exit 0
 fi
@@ -120,11 +113,9 @@ if [ $stage -le 4 ]; then
     data/train data/lang_train exp/tri1_ali exp/tri2
 
   utils/mkgraph.sh data/lang_train_test_tri-noprune exp/tri2 exp/tri2/graph
-  
-  for y in train test dev; do
-    steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" --use-graphs true \
-      data/$y data/lang_train exp/tri2 exp/tri2_${y}_ali
-  done
+
+  steps/align_si.sh --nj "$train_jobs" --cmd "$train_cmd" --use-graphs true \
+    data/train data/lang_train exp/tri2 exp/tri2_ali
 
   $only && exit 0
 fi
@@ -146,13 +137,11 @@ fi
 
 # testing
 if [ $stage -le 6 ]; then
-  for x in mono0 tri1 tri2 tri3; do
     for y in train test dev; do
       local/ali_to_praat.sh --frame-shift $frame_shift \
-        --copy-wav $copy_wav exp/${x}_${y}_ali \
+        --copy-wav $copy_wav exp/tri3_${y}_ali \
         data/$y
     done
-  done
 
   $only && exit 0
 fi
