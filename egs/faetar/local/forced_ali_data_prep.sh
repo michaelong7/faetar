@@ -29,16 +29,6 @@ if [ ! -d "$4" ]; then
   exit 1
 fi
 
-function get_text () {
-  filepath="$1"
-  name="$(basename "$filepath" .txt | tr '_' '-')"
-  start="$(cut -d - -f 2 <<< "$name")"
-  end="$(cut -d - -f 3 <<< "$name")"
-  text="$(< "$1")"
-  echo -e "$name $text"
-
-}
-
 # construct kaldi files
 function construct_kaldi_files () {
   partitions=(train test dev)
@@ -70,7 +60,7 @@ function construct_kaldi_files () {
       else
         find "$partition_dir" -name "*$name.txt" -print |
         sort |
-        xargs -I{} bash -c 'get_text ' -- "{}" |
+        xargs -I{} bash -c 'name="$(basename "$1" .txt | tr '_' '-')"; text="$(< "$1")"; echo -e "$name $text"' -- "{}" |
         tee -a "text_$x" |
         cut -d ' ' -f 1 |
         awk -v name="$name" -v partition="$x" \
@@ -136,8 +126,6 @@ local="$(pwd -P)/local"
 utils="$(pwd -P)/utils"
 
 cd "$dir"
-
-export -f get_text
 
 construct_kaldi_files 
 
