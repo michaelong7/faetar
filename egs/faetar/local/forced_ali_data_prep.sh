@@ -31,14 +31,12 @@ fi
 
 function get_text () {
   filepath="$1"
-  name="$(echo "$(basename "$filepath" .txt | tr '_' '-' | awk 'BEGIN {FS="-"; OFS="-"} {print $4,$1,$2,$3}')")"
-  start="$(cut -d - -f 3 <<< "$name")"
-  end="$(cut -d - -f 4 <<< "$name")"
+  name="$(basename "$filepath" .txt | tr '_' '-')"
+  start="$(cut -d - -f 2 <<< "$name")"
+  end="$(cut -d - -f 3 <<< "$name")"
   text="$(< "$1")"
-  if (( $(bc -l <<< "$end - $start >= 50") )); then
-    echo -e "$name $text"
-  fi
-        
+  echo -e "$name $text"
+
 }
 
 # construct kaldi files
@@ -72,7 +70,7 @@ function construct_kaldi_files () {
       else
         find "$partition_dir" -name "*$name.txt" -print |
         sort |
-        xargs -I{} bash -c 'get_text "$1"' -- "{}" |
+        xargs -I{} bash -c 'get_text ' -- "{}" |
         tee -a "text_$x" |
         cut -d ' ' -f 1 |
         awk -v name="$name" -v partition="$x" \
