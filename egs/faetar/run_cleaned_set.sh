@@ -80,6 +80,8 @@ if [ $stage -le 1 ]; then
   $only && exit 0
 fi
 
+frame_shift=$(cat data/train/frame_shift)
+
 # make speaker-independent monophone model
 if [ $stage -le 2 ]; then
   steps/train_mono.sh --cmd "$train_cmd" --nj "$train_jobs" \
@@ -139,8 +141,7 @@ fi
 if [ $stage -le 6 ]; then
     for y in train test dev; do
       local/ali_to_praat.sh --frame-shift $frame_shift \
-        --copy-wav $copy_wav exp/tri3_${y}_ali \
-        data/$y
+       exp/tri3_${y}_ali data/$y
     done
 
   $only && exit 0

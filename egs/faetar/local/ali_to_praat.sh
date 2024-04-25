@@ -132,7 +132,7 @@ for tier in ("utts", "phones", "vad"):
     prev_interval_end = 0
     for line in f:
       utt, start, end, label = line.strip().split(maxsplit=3)
-      rec, spk, _, _ = utt.rsplit("-", maxsplit=3)
+      spk, _, _, rec = utt.rsplit("-", maxsplit=3)
 
       if prev_rec is None or prev_rec != rec or prev_spk != spk:
         prev_interval_end = 0
