@@ -79,7 +79,7 @@ last != $1 {
 
 awk -v "fs=$frame_shift" '
 FNR == NR {utt2start[$1] = $3}
-FNR != NR {print $1, utt2start[$1] + $2 * fs, utt2start[$1] + $3 * fs, $4}
+FNR != NR {printf "%s %.2f %.2f %s\n", $1, utt2start[$1] + $2 * fs, utt2start[$1] + $3 * fs, $4}
 ' "$data_dir/segments" "$tmp_dir/phones_frames" | \
   perl -CS -p "local/sampa_to_ipa.pl" > "$tmp_dir/phones_segments"
 
