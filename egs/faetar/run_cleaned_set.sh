@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-usage="Usage: $0 [-h] [--stage I] [--only {true,false}] [--test-dir DIR] [--train-dir DIR] [--feat-jobs N] [--train-jobs N] [--decode-jobs N]"
+usage="Usage: $0 [-h] [--stage I] [--only {true,false}] [--test-dir DIR] [--train-dir DIR] [--dev-dir DIR] [--cleaned-dir DIR] [--feat-jobs N] [--train-jobs N] [--decode-jobs N]"
 stage=0
 cleaned_dir=
 test_dir=
@@ -34,8 +34,8 @@ Options
 
 
 
-. ./cmd.sh
-. utils/parse_options.sh
+# . ./cmd.sh
+# . utils/parse_options.sh
 
 if [ $# -ne 0 ]; then
   echo "$usage"
