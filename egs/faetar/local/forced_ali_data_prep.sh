@@ -109,7 +109,7 @@ function split_text () {
       text = text $i;
     }
 
-    gsub(/\[fp\]|d[zʒ]ː|tʃː|d[zʒ]|tʃ|\Sː|\S/, "& ", text);
+    gsub(/\[fp\]|d[zʒ]ː|t[sʃ]ː|d[zʒ]|t[sʃ]|\Sː|\S/, "& ", text);
     print $1, text;
     text = ""
   }' "$text_file" > "$text_file"_
