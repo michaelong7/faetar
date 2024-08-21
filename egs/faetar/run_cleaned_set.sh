@@ -34,8 +34,8 @@ Options
 
 
 
-# . ./cmd.sh
-# . utils/parse_options.sh
+. ./cmd.sh
+. utils/parse_options.sh
 
 if [ $# -ne 0 ]; then
   echo "$usage"
