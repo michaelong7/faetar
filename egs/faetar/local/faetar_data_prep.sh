@@ -71,10 +71,11 @@ function split_text () {
     text = $2;
 
     for (i = 3; i <= NF; i++) {
-      text = text $i;
+      text = text " " $i;
     }
 
     gsub(/\[fp\]|d[zʒ]ː|t[sʃ]ː|d[zʒ]|t[sʃ]|\Sː|\S/, "& ", text);
+    gsub(/  /, " ", text);
     print $1, text;
     text = ""
   }' "$text_file" > "$text_file"_
