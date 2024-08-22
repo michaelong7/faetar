@@ -8,6 +8,7 @@ use utf8;
 s/\[x\]/ SPN/g;
 
 # start with the 2-character phones
+s/(?<! )ts/ ts/g;
 s/(?<! )t\N{U+0283}/ tS/g;  # tʃ
 s/(?<! )d\N{U+0292}/ dZ/g;  # dʒ
 s/(?<! )dz/ dz/g;
