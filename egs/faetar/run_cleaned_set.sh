@@ -146,3 +146,48 @@ if [ $stage -le 6 ]; then
 
   $only && exit 0
 fi
+
+# testing
+if [ $stage -le 7 ]; then
+  for x in mono0 tri1 tri2 tri3; do
+        if [ "$x" != "tri3" ]; then
+          steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt "0.25" \
+            exp/$x/graph data/test exp/$x/decode_test
+        else
+          steps/decode_fmllr.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt "0.25" \
+            exp/$x/graph data/test exp/$x/decode_test
+        fi
+  done
+
+  $only && exit 0
+fi
+
+# testing
+if [ $stage -le 8 ]; then
+  for x in mono0 tri1 tri2 tri3; do
+        if [ "$x" != "tri3" ]; then
+          steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt "0.25" \
+            exp/$x/graph data/train exp/$x/decode_train
+        else
+          steps/decode_fmllr.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt "0.25" \
+            exp/$x/graph data/train exp/$x/decode_train
+        fi
+  done
+
+  $only && exit 0
+fi
+
+# testing
+if [ $stage -le 9 ]; then
+  for x in mono0 tri1 tri2 tri3; do
+        if [ "$x" != "tri3" ]; then
+          steps/decode.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt "0.25" \
+            exp/$x/graph data/dev exp/$x/decode_dev
+        else
+          steps/decode_fmllr.sh --nj "$decode_jobs" --cmd "$decode_cmd" --scoring-opts "$scoring_opts" --acwt "0.25" \
+            exp/$x/graph data/dev exp/$x/decode_dev
+        fi
+  done
+
+  $only && exit 0
+fi
